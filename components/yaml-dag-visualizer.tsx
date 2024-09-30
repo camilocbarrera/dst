@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useCallback, useEffect, useRef } from 'react'
-import Editor, { Monaco } from "@monaco-editor/react";
-import * as monaco from 'monaco-editor';
+import Editor, { Monaco, OnChange } from "@monaco-editor/react";
+// import type * as monaco from 'monaco-editor';
+import React from 'react'
 
 import ReactFlow, {
   Node,
@@ -23,6 +24,7 @@ import 'reactflow/dist/style.css'
 import { Check, AlertTriangle, XCircle, Sun, Moon, BookOpen, ChevronDown, Info } from 'lucide-react'
 import yaml from 'js-yaml'
 import dagre from 'dagre';
+import { editor } from 'monaco-editor';  // Add this import if not already present
 
 const initialNodes: Node[] = []
 const initialEdges: Edge[] = []
@@ -39,7 +41,14 @@ const statusIcons = {
   failed: <XCircle className="w-4 h-4 text-white" />,
 }
 
-const CustomNode = ({ data }) => {
+// Add this interface near the top of the file, after the imports
+interface CustomNodeData {
+  label: string;
+  operator: string;
+  status?: 'success' | 'skipped' | 'failed';
+}
+
+const CustomNode = ({ data }: { data: CustomNodeData }) => {
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden ${data.status ? statusColors[data.status] : ''}`}>
       <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
@@ -62,6 +71,17 @@ const CustomNode = ({ data }) => {
 
 const nodeTypes = {
   custom: CustomNode,
+}
+
+// Define an interface for the parsed YAML structure
+interface ParsedYAML {
+  tasks?: Array<{
+    task_id: string;
+    operator: string;
+    [key: string]: string | number | boolean | object;  // Allow additional properties of various types
+  }>;
+  dependencies?: Array<[string, string]>;
+  [key: string]: unknown;  // Allow additional top-level properties of unknown type
 }
 
 function DAGVisualizerContent() {
@@ -97,7 +117,7 @@ dependencies:
 
   const onConnect = useCallback((params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges])
 
-  const getLayoutedElements = useCallback((nodes, edges, direction = 'LR') => {
+  const getLayoutedElements = useCallback((nodes: Node[], edges: Edge[], direction = 'LR') => {
     const dagreGraph = new dagre.graphlib.Graph();
     dagreGraph.setDefaultEdgeLabel(() => ({}));
 
@@ -132,32 +152,31 @@ dependencies:
 
   const parseYAML = useCallback((input: string) => {
     try {
-      const parsedYAML = yaml.load(input) as any
-      let newNodes: Node[] = []
-      let newEdges: Edge[] = []
+      const parsedYAML = yaml.load(input) as ParsedYAML;
+      let newNodes: Node[] = [];
+      let newEdges: Edge[] = [];
 
       if (parsedYAML.tasks) {
-        newNodes = parsedYAML.tasks.map((task: any, index: number) => ({
+        newNodes = parsedYAML.tasks.map((task) => ({
           id: task.task_id,
           type: 'custom',
           data: { 
             label: task.task_id, 
-            // status: 'pending', 
             operator: task.operator
           },
-          position: { x: 0, y: 0 }, // Position will be set by dagre
-        }))
+          position: { x: 0, y: 0 },
+        }));
       }
 
       if (parsedYAML.dependencies) {
-        newEdges = parsedYAML.dependencies.map((dep: string[], index: number) => ({
+        newEdges = parsedYAML.dependencies.map((dep) => ({
           id: `${dep[0]}-${dep[1]}`,
           source: dep[0],
           target: dep[1],
           type: 'smoothstep',
           animated: true,
           style: { stroke: '#b1b1b7' },
-        }))
+        }));
       }
 
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges);
@@ -177,14 +196,15 @@ dependencies:
     }
   }, [setNodes, setEdges, getLayoutedElements])
 
-  const handleEditorChange = useCallback((value: string) => {
-    setInput(value)
-  }, [])
+  const handleEditorChange: OnChange = (value) => {
+    if (value !== undefined) {
+      setInput(value);
+    }
+  };
 
-  const [editorMounted, setEditorMounted] = useState(false)
   const [editorWidth, setEditorWidth] = useState(35)
   const [isDragging, setIsDragging] = useState(false)
-  const containerRef = useRef(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const handleMouseDown = () => {
     setIsDragging(true)
@@ -195,7 +215,7 @@ dependencies:
   }
 
   const handleMouseMove = useCallback(
-    (e) => {
+    (e: MouseEvent) => {
       if (isDragging && containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth
         const newWidth = (e.clientX / containerWidth) * 100
@@ -215,10 +235,6 @@ dependencies:
   }, [handleMouseMove])
 
   useEffect(() => {
-    setEditorMounted(true)
-  }, [])
-
-  useEffect(() => {
     parseYAML(input)
   }, [input, parseYAML])
 
@@ -230,7 +246,7 @@ dependencies:
     }
   }, [nodes, fitView])
 
-  const editorOptions = {
+  const editorOptions: editor.IStandaloneEditorConstructionOptions = {
     minimap: { enabled: false },
     scrollBeyondLastLine: false,
     fontSize: 14,
@@ -248,20 +264,22 @@ dependencies:
     overviewRulerBorder: false
   }
 
-  const editorRef = useRef(null);
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   function handleEditorWillMount(monaco: Monaco) {
     // Register the YAML language
     monaco.languages.register({ id: 'yaml' });
     
     // Define a more comprehensive set of completion items
-    const createDependencySnippet = (context) => {
+    const createDependencySnippet = (context: { nodes: Node[] }) => {
       const nodeIds = context.nodes.map(node => node.data.label);
       return nodeIds.map(id => ({
         label: id,
         kind: monaco.languages.CompletionItemKind.Value,
         insertText: id,
         detail: 'Task ID',
+        documentation: `Insert task ID: ${id}`,
+        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
       }));
     };
 
@@ -331,9 +349,8 @@ dependencies:
     });
   }
 
-  function handleEditorDidMount(editor, monaco) {
+  function handleEditorDidMount(editor: editor.IStandaloneCodeEditor) {
     editorRef.current = editor;
-    setEditorMounted(true);
   }
 
   const [isDarkMode, setIsDarkMode] = useState(false)
@@ -555,7 +572,6 @@ dependencies:
                 ...editorOptions,
                 automaticLayout: true,
                 tabSize: 2,
-                minimap: { enabled: false },
               }}
               onChange={handleEditorChange}
               beforeMount={handleEditorWillMount}

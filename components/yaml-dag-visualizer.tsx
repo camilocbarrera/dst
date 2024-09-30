@@ -387,78 +387,105 @@ dependencies:
   - ['process_task', 'email_task']
   - ['email_task', 'end_task']`,
     complex: `# Complex DAGML file (complex_dagml.yaml)
+# S3 to Snowflake DAGML file (s3_to_snowflake_dagml.yaml)
 dag:
-  dag_id: 'complex_parallel_dag'
+  dag_id: 's3_to_snowflake_parallel_dag'
   schedule_interval: '@daily'
   start_date: '2024-10-01'
 
 tasks:
   - task_id: 'start_task'
     operator: 'BashOperator'
-    bash_command: 'echo "Start"'
+    bash_command: 'echo "Start S3 to Snowflake Data Pipeline"'
 
-  - task_id: 'branch_a_task1'
+  - task_id: 'extract_data_task1'
     operator: 'PythonOperator'
-    python_callable: 'branch_a_processing_step1'
+    python_callable: 'extract_data_from_s3'
+    op_kwargs:
+      s3_bucket: 'my-bucket'
+      s3_key: 'data/file1.csv'
 
-  - task_id: 'branch_a_task2'
+  - task_id: 'extract_data_task2'
     operator: 'PythonOperator'
-    python_callable: 'branch_a_processing_step2'
+    python_callable: 'extract_data_from_s3'
+    op_kwargs:
+      s3_bucket: 'my-bucket'
+      s3_key: 'data/file2.csv'
 
-  - task_id: 'branch_b_task1'
-    operator: 'BashOperator'
-    bash_command: 'echo "Branch B Step 1"'
-
-  - task_id: 'branch_b_task2'
-    operator: 'BashOperator'
-    bash_command: 'echo "Branch B Step 2"'
-
-  - task_id: 'branch_c_task1'
+  - task_id: 'extract_data_task3'
     operator: 'PythonOperator'
-    python_callable: 'branch_c_processing_step1'
+    python_callable: 'extract_data_from_s3'
+    op_kwargs:
+      s3_bucket: 'my-bucket'
+      s3_key: 'data/file3.csv'
 
-  - task_id: 'branch_c_task2'
+  - task_id: 'transform_data_task1'
     operator: 'PythonOperator'
-    python_callable: 'branch_c_processing_step2'
+    python_callable: 'transform_data'
+    op_kwargs:
+      file_path: '/tmp/file1.csv'
 
-  - task_id: 'email_branch_a'
+  - task_id: 'transform_data_task2'
+    operator: 'PythonOperator'
+    python_callable: 'transform_data'
+    op_kwargs:
+      file_path: '/tmp/file2.csv'
+
+  - task_id: 'transform_data_task3'
+    operator: 'PythonOperator'
+    python_callable: 'transform_data'
+    op_kwargs:
+      file_path: '/tmp/file3.csv'
+
+  - task_id: 'load_data_to_snowflake_task1'
+    operator: 'PythonOperator'
+    python_callable: 'load_data_to_snowflake'
+    op_kwargs:
+      file_path: '/tmp/transformed_file1.csv'
+      table_name: 'snowflake_table_1'
+
+  - task_id: 'load_data_to_snowflake_task2'
+    operator: 'PythonOperator'
+    python_callable: 'load_data_to_snowflake'
+    op_kwargs:
+      file_path: '/tmp/transformed_file2.csv'
+      table_name: 'snowflake_table_2'
+
+  - task_id: 'load_data_to_snowflake_task3'
+    operator: 'PythonOperator'
+    python_callable: 'load_data_to_snowflake'
+    op_kwargs:
+      file_path: '/tmp/transformed_file3.csv'
+      table_name: 'snowflake_table_3'
+
+  - task_id: 'email_notification'
     operator: 'EmailOperator'
-    to: 'user_a@example.com'
-    subject: 'Branch A Completed'
-    html_content: 'Branch A DAG has completed processing.'
-
-  - task_id: 'email_branch_b'
-    operator: 'EmailOperator'
-    to: 'user_b@example.com'
-    subject: 'Branch B Completed'
-    html_content: 'Branch B DAG has completed processing.'
-
-  - task_id: 'email_branch_c'
-    operator: 'EmailOperator'
-    to: 'user_c@example.com'
-    subject: 'Branch C Completed'
-    html_content: 'Branch C DAG has completed processing.'
+    to: 'data_team@example.com'
+    subject: 'S3 to Snowflake Data Pipeline Completed'
+    html_content: 'The S3 to Snowflake pipeline has successfully loaded all data.'
 
   - task_id: 'end_task'
     operator: 'BashOperator'
     bash_command: 'echo "End of DAG"'
 
 dependencies:
-  - ['start_task', 'branch_a_task1']
-  - ['start_task', 'branch_b_task1']
-  - ['start_task', 'branch_c_task1']
+  - ['start_task', 'extract_data_task1']
+  - ['start_task', 'extract_data_task2']
+  - ['start_task', 'extract_data_task3']
 
-  - ['branch_a_task1', 'branch_a_task2']
-  - ['branch_b_task1', 'branch_b_task2']
-  - ['branch_c_task1', 'branch_c_task2']
+  - ['extract_data_task1', 'transform_data_task1']
+  - ['extract_data_task2', 'transform_data_task2']
+  - ['extract_data_task3', 'transform_data_task3']
 
-  - ['branch_a_task2', 'email_branch_a']
-  - ['branch_b_task2', 'email_branch_b']
-  - ['branch_c_task2', 'email_branch_c']
+  - ['transform_data_task1', 'load_data_to_snowflake_task1']
+  - ['transform_data_task2', 'load_data_to_snowflake_task2']
+  - ['transform_data_task3', 'load_data_to_snowflake_task3']
 
-  - ['email_branch_a', 'end_task']
-  - ['email_branch_b', 'end_task']
-  - ['email_branch_c', 'end_task']`
+  - ['load_data_to_snowflake_task1', 'email_notification']
+  - ['load_data_to_snowflake_task2', 'email_notification']
+  - ['load_data_to_snowflake_task3', 'email_notification']
+
+  - ['email_notification', 'end_task']`
   })
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)

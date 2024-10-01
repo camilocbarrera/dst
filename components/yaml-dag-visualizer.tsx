@@ -679,7 +679,7 @@ update_metadata >> end`
       {/* Navbar */}
       <nav className={`flex items-center p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-md relative z-10`}>
         <div className="flex items-center space-x-4 flex-grow">
-          <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>DAG Sketch 🎨</h1>
+          <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>DAG Sketch Tool🎨</h1>
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -750,7 +750,7 @@ update_metadata >> end`
 
                 <section className="flex flex-col space-y-2">
                   <a
-                    href="https://github.com/camilocbarrera/dag-sketch"
+                    href="https://github.com/camilocbarrera"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`text-blue-500 hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
@@ -758,7 +758,7 @@ update_metadata >> end`
                     GitHub Repository
                   </a>
                   <a
-                    href="https://github.com/camilocbarrera/dag-sketch/issues"
+                    href="https://github.com/camilocbarrera"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`text-blue-500 hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}

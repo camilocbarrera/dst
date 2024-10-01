@@ -17,7 +17,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "DAG Sketch",
+  title: "DAG Sketch Tool",
   description: "A visual DAG (Directed Acyclic Graph) editor and viewer for workflow definitions",
   icons: {
     icon: [

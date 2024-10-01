@@ -19,6 +19,8 @@ import ReactFlow, {
   Position,
   useReactFlow,
   ReactFlowProvider,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  Node as ReactFlowNode,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { Check, AlertTriangle, XCircle, Sun, Moon, BookOpen, ChevronDown, Info } from 'lucide-react'
@@ -87,7 +89,7 @@ interface ParsedYAML {
 function DAGVisualizerContent() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
-  const [input, setInput] = useState(`# Example DAGML file (my_dagml.yaml)
+  const [input, setInput] = useState(`# Example DAGML file (my_dagml.dagml)
 dag:
   dag_id: 'example_dag'
   schedule_interval: '@daily'
@@ -347,6 +349,42 @@ dependencies:
         };
       }
     });
+
+    // Register the Bitshift language
+    monaco.languages.register({ id: 'bitshift' });
+
+    monaco.languages.registerCompletionItemProvider('bitshift', {
+      provideCompletionItems: (model, position) => {
+        const word = model.getWordUntilPosition(position);
+        const range = {
+          startLineNumber: position.lineNumber,
+          endLineNumber: position.lineNumber,
+          startColumn: word.startColumn,
+          endColumn: word.endColumn,
+        };
+
+        const suggestions = [
+          {
+            label: '>>',
+            kind: monaco.languages.CompletionItemKind.Operator,
+            insertText: ' >> ',
+            documentation: 'Bitshift operator for task dependencies'
+          },
+          {
+            label: '[]',
+            kind: monaco.languages.CompletionItemKind.Snippet,
+            insertText: '[$1]',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Group tasks'
+          },
+          // Add more Bitshift-specific suggestions here
+        ];
+
+        return {
+          suggestions: suggestions.map(s => ({ ...s, range }))
+        };
+      }
+    });
   }
 
   function handleEditorDidMount(editor: editor.IStandaloneCodeEditor) {
@@ -359,8 +397,11 @@ dependencies:
     setIsDarkMode(!isDarkMode)
   }
 
+  const [mode, setMode] = useState<'dagml' | 'bitshift'>('dagml')
+
   const [examples] = useState({
-    simple: `# Example DAGML file (my_dagml.yaml)
+    dagml: {
+      simple: `# Example DAGML file (my_dagml.dagml)
 dag:
   dag_id: 'example_dag'
   schedule_interval: '@daily'
@@ -386,7 +427,7 @@ dependencies:
   - ['start_task', 'process_task']
   - ['process_task', 'email_task']
   - ['email_task', 'end_task']`,
-    complex: `# Complex DAGML file (complex_dagml.yaml)
+      complex: `# Complex DAGML file (complex_dagml.yaml)
 # S3 to Snowflake DAGML file (s3_to_snowflake_dagml.yaml)
 dag:
   dag_id: 's3_to_snowflake_parallel_dag'
@@ -486,16 +527,152 @@ dependencies:
   - ['load_data_to_snowflake_task3', 'email_notification']
 
   - ['email_notification', 'end_task']`
+    },
+    bitshift: {
+      simple: `start >> [check_source_A_data, check_source_B_data]
+
+check_source_A_data >> [process_source_A_data, handle_missing_source_A_data]
+check_source_B_data >> process_source_B_data
+
+[process_source_A_data, process_source_B_data] >> consolidate_data_sources
+
+consolidate_data_sources >> generate_report
+generate_report >> end
+
+handle_missing_source_A_data >> end`,
+      complex: `start >> [extract_data_A, extract_data_B, extract_data_C]
+
+extract_data_A >> [transform_data_A, validate_data_A]
+extract_data_B >> [transform_data_B, validate_data_B]
+extract_data_C >> [transform_data_C, validate_data_C]
+
+[transform_data_A, transform_data_B, transform_data_C] >> merge_data
+[validate_data_A, validate_data_B, validate_data_C] >> generate_validation_report
+
+merge_data >> [load_to_warehouse, generate_analytics]
+generate_validation_report >> notify_data_quality
+
+[load_to_warehouse, generate_analytics] >> update_metadata
+notify_data_quality >> update_metadata
+
+update_metadata >> end`
+    }
   })
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isInfoOpen, setIsInfoOpen] = useState(false)
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const infoRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as HTMLElement)) {
+        setIsDropdownOpen(false);
+      }
+      if (infoRef.current && !infoRef.current.contains(event.target as HTMLElement)) {
+        setIsInfoOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const loadExample = (exampleKey: 'simple' | 'complex') => {
-    setInput(examples[exampleKey])
+    setInput(examples[mode][exampleKey])
     setIsDropdownOpen(false)
   }
 
-  const [isInfoOpen, setIsInfoOpen] = useState(false)
+  const toggleMode = () => {
+    const newMode = mode === 'dagml' ? 'bitshift' : 'dagml'
+    setMode(newMode)
+    setInput(examples[newMode].simple)  // Load the simple example of the new mode
+  }
+
+  const parseBitshift = useCallback((input: string) => {
+    const lines = input.split('\n').filter(line => line.trim() !== '')
+    const newNodes: Node[] = []
+    const newEdges: Edge[] = []
+    const nodeSet = new Set<string>()
+
+    const addNode = (id: string) => {
+      if (!nodeSet.has(id)) {
+        newNodes.push({
+          id: id,
+          type: 'custom',
+          data: { label: id, operator: 'Operator' },
+          position: { x: 0, y: 0 },
+        })
+        nodeSet.add(id)
+      }
+    }
+
+    const addEdge = (source: string, target: string) => {
+      newEdges.push({
+        id: `${source}-${target}`,
+        source: source,
+        target: target,
+        type: 'smoothstep',
+        animated: true,
+        style: { stroke: '#b1b1b7' },
+      })
+    }
+
+    lines.forEach(line => {
+      const tasks = line.split('>>').map(task => task.trim())
+      
+      tasks.forEach(task => {
+        // Handle grouped tasks
+        if (task.startsWith('[') && task.endsWith(']')) {
+          task.slice(1, -1).split(',').map(t => t.trim()).forEach(addNode)
+        } else {
+          addNode(task)
+        }
+      })
+
+      // Create edges between consecutive tasks
+      for (let i = 0; i < tasks.length - 1; i++) {
+        const sourceTasks = tasks[i].startsWith('[') && tasks[i].endsWith(']')
+          ? tasks[i].slice(1, -1).split(',').map(t => t.trim())
+          : [tasks[i]]
+        
+        const targetTasks = tasks[i+1].startsWith('[') && tasks[i+1].endsWith(']')
+          ? tasks[i+1].slice(1, -1).split(',').map(t => t.trim())
+          : [tasks[i+1]]
+
+        sourceTasks.forEach(source => {
+          targetTasks.forEach(target => {
+            addEdge(source, target)
+          })
+        })
+      }
+    })
+
+    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges)
+
+    setNodes([])
+    setEdges([])
+
+    setTimeout(() => {
+      setNodes(layoutedNodes)
+      setEdges(layoutedEdges)
+    }, 0)
+  }, [getLayoutedElements, setNodes, setEdges])
+
+  const parseInput = useCallback((input: string) => {
+    if (mode === 'dagml') {
+      parseYAML(input)
+    } else {
+      parseBitshift(input)
+    }
+  }, [mode, parseYAML, parseBitshift])
+
+  useEffect(() => {
+    parseInput(input)
+  }, [input, parseInput])
 
   return (
     <div className={`flex flex-col h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
@@ -503,7 +680,7 @@ dependencies:
       <nav className={`flex items-center p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-md relative z-10`}>
         <div className="flex items-center space-x-4 flex-grow">
           <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>DAG Sketch 🎨</h1>
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className={`px-3 py-2 rounded ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'} flex items-center`}
@@ -533,56 +710,95 @@ dependencies:
               </div>
             )}
           </div>
-          <button
-            onClick={() => setIsInfoOpen(!isInfoOpen)}
-            className={`px-3 py-2 rounded ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'} flex items-center`}
-          >
-            <Info size={16} className="mr-2" />
-            Info
-          </button>
-          {isInfoOpen && (
-            <div className={`absolute top-16 left-4 w-96 p-4 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'} ring-1 ring-black ring-opacity-5 z-20`}>
-              <h2 className="text-lg font-semibold mb-2">DAG Sketch</h2>
-              <p className="mb-2">
-                DAG Sketch is an open-source tool for visualizing Directed Acyclic Graphs (DAGs) from YAML-based DAGML definitions.
-              </p>
-              <p className="mb-2">
-                DAGML (DAG Markup Language) is a YAML-based format for defining DAGs, commonly used in workflow orchestration tools like Apache Airflow.
-              </p>
-              <p className="mb-2">
-                Instructions:
-                <ol className="list-decimal list-inside">
-                  <li>Write or paste your DAGML definition in the editor on the left.</li>
-                  <li>The visualization will update in real-time on the right.</li>
-                  <li>Use the Examples dropdown to load sample DAGML structures.</li>
-                </ol>
-              </p>
-              <div className="flex space-x-4">
-                <a
-                  href="https://github.com/camilocbarrera/dag-sketch"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`text-blue-500 hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
-                >
-                  GitHub Repository
-                </a>
-                <a
-                  href="https://github.com/camilocbarrera/dag-sketch/issues"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`text-blue-500 hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
-                >
-                  Report Issues
-                </a>
+          <div ref={infoRef}>
+            <button
+              onClick={() => setIsInfoOpen(!isInfoOpen)}
+              className={`px-3 py-2 rounded ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'} flex items-center`}
+            >
+              <Info size={16} className="mr-2" />
+              Info
+            </button>
+            {isInfoOpen && (
+              <div className={`absolute top-16 left-4 w-96 p-4 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'} ring-1 ring-black ring-opacity-5 z-20`}>
+                <h2 className="text-lg font-semibold mb-4">DAG Sketch</h2>
+                
+                <section className="mb-4">
+                  <p className="mb-2">
+                    An open-source tool for visualizing Directed Acyclic Graphs (DAGs) from YAML-based DAGML definitions.
+                  </p>
+                  <p>
+                    DAGML (DAG Markup Language) is a YAML-based format for defining DAGs, commonly used in workflow orchestration tools like Apache Airflow.
+                  </p>
+                </section>
+
+                <section className="mb-4">
+                  <h3 className="text-md font-semibold mb-2">Bitshift Mode</h3>
+                  <p>
+                    In Airflow, the <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">{'>>'}</code> operators (called bitshift operators) are used to define task dependencies. Use this syntax in Bitshift mode.
+                  </p>
+                </section>
+
+                <section className="mb-4">
+                  <h3 className="text-md font-semibold mb-2">Instructions</h3>
+                  <ol className="list-decimal list-inside space-y-1">
+                    <li>Write or paste your DAGML definition in the left editor.</li>
+                    <li>The visualization updates in real-time on the right.</li>
+                    <li>Use the Examples dropdown for sample DAGML structures.</li>
+                    <li>Toggle between DAGML and Bitshift modes for different syntax.</li>
+                  </ol>
+                </section>
+
+                <section className="flex flex-col space-y-2">
+                  <a
+                    href="https://github.com/camilocbarrera/dag-sketch"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`text-blue-500 hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
+                  >
+                    GitHub Repository
+                  </a>
+                  <a
+                    href="https://github.com/camilocbarrera/dag-sketch/issues"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`text-blue-500 hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
+                  >
+                    Report Issues
+                  </a>
+                  <a 
+                    href="https://stackoverflow.com/questions/52389105/how-operator-defines-task-dependencies-in-airflow"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`text-blue-500 hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
+                  >
+                    Learn more about bitshift operators in Airflow
+                  </a>
+                </section>
               </div>
-            </div>
-          )}
+            )}
+          </div>
           <button
             onClick={toggleDarkMode}
             className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-200 text-gray-800'}`}
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
+          <div className="flex items-center space-x-2">
+            <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>DAGML</span>
+            <button
+              onClick={toggleMode}
+              className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
+                mode === 'bitshift' ? 'bg-blue-600' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block w-4 h-4 transform transition-transform bg-white rounded-full ${
+                  mode === 'bitshift' ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Bitshift ≫</span>
+          </div>
         </div>
       </nav>
 
@@ -592,7 +808,7 @@ dependencies:
           <div className={`flex-grow border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg m-4 overflow-hidden shadow-lg`}>
             <Editor
               height="100%"
-              language="yaml"
+              language={mode === 'dagml' ? "yaml" : "bitshift"}
               theme={isDarkMode ? "vs-dark" : "light"}
               value={input}
               options={{

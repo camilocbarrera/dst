@@ -15,3 +15,7 @@ DAG Sketch Tool (DST) simplifies the creation and management of Apache Airflow D
 - Simple DAG Definition: Use DAGML to define DAGs in a concise YAML format.
 - Visual DAG Designer: Sketch and visualize your DAGs with an interactive UI.
 - Powerful CLI: Manage, compile, and validate DAGs using the dst command-line tool.
+
+## Try it out
+
+You can test the interactive UI of DAG Sketch Tool at [https://www.dag-sketch.com/](https://www.dag-sketch.com/). This web-based interface allows you to experiment with the visual DAG designer and get a feel for how the tool works.

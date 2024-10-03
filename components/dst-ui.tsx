@@ -119,14 +119,20 @@ dependencies:
 
   const onConnect = useCallback((params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges])
 
-  const getLayoutedElements = useCallback((nodes: Node[], edges: Edge[], direction = 'LR') => {
+  const getLayoutedElements = useCallback((
+    nodes: Node[], 
+    edges: Edge[], 
+    direction = 'LR',
+    rankSeparation = 50,
+    nodeSeparation = 25
+  ) => {
     const dagreGraph = new dagre.graphlib.Graph();
     dagreGraph.setDefaultEdgeLabel(() => ({}));
 
     const nodeWidth = 172;
     const nodeHeight = 86;
 
-    dagreGraph.setGraph({ rankdir: direction, ranksep: 100, nodesep: 50 });
+    dagreGraph.setGraph({ rankdir: direction, ranksep: rankSeparation, nodesep: nodeSeparation });
 
     nodes.forEach((node) => {
       dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
@@ -152,6 +158,10 @@ dependencies:
     return { nodes: layoutedNodes, edges };
   }, []);
 
+  // Add new state for REPL output
+  const [replOutput, setReplOutput] = useState('')
+
+  // Modify parseYAML function to update REPL output
   const parseYAML = useCallback((input: string) => {
     try {
       const parsedYAML = yaml.load(input) as ParsedYAML;
@@ -181,7 +191,7 @@ dependencies:
         }));
       }
 
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges);
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges, 'LR', 50, 25);
 
       // Clear existing nodes and edges before setting new ones
       setNodes([])
@@ -193,8 +203,12 @@ dependencies:
         setEdges(layoutedEdges)
       }, 0)
 
+      // Update REPL output
+      setReplOutput(JSON.stringify(parsedYAML, null, 2))
+
     } catch (error) {
       console.error('Error parsing YAML:', error)
+      setReplOutput(`Error parsing YAML: ${error}`)
     }
   }, [setNodes, setEdges, getLayoutedElements])
 
@@ -529,17 +543,15 @@ dependencies:
   - ['email_notification', 'end_task']`
     },
     bitshift: {
-      simple: `start >> [check_source_A_data, check_source_B_data]
+      simple: `start >> [check_source_A, check_source_B]
 
-check_source_A_data >> [process_source_A_data, handle_missing_source_A_data]
-check_source_B_data >> process_source_B_data
+check_source_A >> process_source_A
+check_source_B >> process_source_B
 
-[process_source_A_data, process_source_B_data] >> consolidate_data_sources
+[process_source_A, process_source_B] >> consolidate_data
 
-consolidate_data_sources >> generate_report
-generate_report >> end
-
-handle_missing_source_A_data >> end`,
+consolidate_data >> generate_report
+generate_report >> end`,
       complex: `start >> [extract_data_A, extract_data_B, extract_data_C]
 
 extract_data_A >> [transform_data_A, validate_data_A]
@@ -598,8 +610,13 @@ update_metadata >> end`
     const newEdges: Edge[] = []
     const nodeSet = new Set<string>()
 
+    const isValidNodeId = (id: string) => {
+      // Check if the id contains any special characters
+      return !/[>,[,\]]/.test(id);
+    }
+
     const addNode = (id: string) => {
-      if (!nodeSet.has(id)) {
+      if (id && !nodeSet.has(id) && isValidNodeId(id)) {
         newNodes.push({
           id: id,
           type: 'custom',
@@ -611,55 +628,71 @@ update_metadata >> end`
     }
 
     const addEdge = (source: string, target: string) => {
-      newEdges.push({
-        id: `${source}-${target}`,
-        source: source,
-        target: target,
-        type: 'smoothstep',
-        animated: true,
-        style: { stroke: '#b1b1b7' },
-      })
+      if (source && target && isValidNodeId(source) && isValidNodeId(target)) {
+        newEdges.push({
+          id: `${source}-${target}`,
+          source: source,
+          target: target,
+          type: 'smoothstep',
+          animated: true,
+          style: { stroke: '#b1b1b7' },
+        })
+      }
     }
 
     lines.forEach(line => {
-      const tasks = line.split('>>').map(task => task.trim())
+      const parts = line.split('>>').map(part => part.trim())
       
-      tasks.forEach(task => {
-        // Handle grouped tasks
-        if (task.startsWith('[') && task.endsWith(']')) {
-          task.slice(1, -1).split(',').map(t => t.trim()).forEach(addNode)
-        } else {
-          addNode(task)
+      parts.forEach(part => {
+        if (part.startsWith('[') && part.endsWith(']')) {
+          const innerParts = part.slice(1, -1).split(',').map(t => t.trim()).filter(t => t !== '')
+          innerParts.forEach(addNode)
+        } else if (part) {
+          addNode(part)
         }
       })
 
-      // Create edges between consecutive tasks
-      for (let i = 0; i < tasks.length - 1; i++) {
-        const sourceTasks = tasks[i].startsWith('[') && tasks[i].endsWith(']')
-          ? tasks[i].slice(1, -1).split(',').map(t => t.trim())
-          : [tasks[i]]
-        
-        const targetTasks = tasks[i+1].startsWith('[') && tasks[i+1].endsWith(']')
-          ? tasks[i+1].slice(1, -1).split(',').map(t => t.trim())
-          : [tasks[i+1]]
+      // Create edges only if there are at least two parts
+      if (parts.length >= 2) {
+        for (let i = 0; i < parts.length - 1; i++) {
+          const sourceTasks = parts[i].startsWith('[') && parts[i].endsWith(']')
+            ? parts[i].slice(1, -1).split(',').map(t => t.trim()).filter(t => t !== '')
+            : [parts[i]]
+          
+          const targetTasks = parts[i+1].startsWith('[') && parts[i+1].endsWith(']')
+            ? parts[i+1].slice(1, -1).split(',').map(t => t.trim()).filter(t => t !== '')
+            : [parts[i+1]]
 
-        sourceTasks.forEach(source => {
-          targetTasks.forEach(target => {
-            addEdge(source, target)
+          sourceTasks.forEach(source => {
+            targetTasks.forEach(target => {
+              addEdge(source, target)
+            })
           })
-        })
+        }
       }
     })
 
-    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges)
+    if (newNodes.length > 0) {
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges)
 
-    setNodes([])
-    setEdges([])
+      setNodes([])
+      setEdges([])
 
-    setTimeout(() => {
-      setNodes(layoutedNodes)
-      setEdges(layoutedEdges)
-    }, 0)
+      setTimeout(() => {
+        setNodes(layoutedNodes)
+        setEdges(layoutedEdges)
+      }, 0)
+    } else {
+      setNodes([])
+      setEdges([])
+    }
+
+    // Update REPL output
+    const parsedStructure = {
+      nodes: newNodes.map(node => node.id),
+      edges: newEdges.map(edge => ({ source: edge.source, target: edge.target }))
+    }
+    setReplOutput(JSON.stringify(parsedStructure, null, 2))
   }, [getLayoutedElements, setNodes, setEdges])
 
   const parseInput = useCallback((input: string) => {
@@ -750,7 +783,7 @@ update_metadata >> end`
 
                 <section className="flex flex-col space-y-2">
                   <a
-                    href="https://github.com/camilocbarrera"
+                    href="https://github.com/camilocbarrera/dst"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`text-blue-500 hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
@@ -758,7 +791,7 @@ update_metadata >> end`
                     GitHub Repository
                   </a>
                   <a
-                    href="https://github.com/camilocbarrera"
+                    href="https://github.com/camilocbarrera/dst"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`text-blue-500 hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
@@ -821,6 +854,15 @@ update_metadata >> end`
               onMount={handleEditorDidMount}
               className="rounded-lg"
             />
+          </div>
+          {/* REPL output section with fixed height */}
+          <div className={`h-48 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg mx-4 mb-4 overflow-hidden shadow-lg`}>
+            <div className={`p-2 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'}`}>
+              REPL Output
+            </div>
+            <pre className={`p-4 overflow-auto h-[calc(100%-2rem)] ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
+              {replOutput}
+            </pre>
           </div>
         </div>
         <div

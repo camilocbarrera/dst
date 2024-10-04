@@ -8,44 +8,30 @@ import Head from 'next/head';
 
 import ReactFlow, {
   Node,
-  Edge,
   useNodesState,
   useEdgesState,
-  addEdge,
-  Connection,
   ConnectionMode,
   Controls,
-  Background,
   Handle,
   Position,
   useReactFlow,
   ReactFlowProvider,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  Node as ReactFlowNode,
   ReactFlowInstance,
+  EdgeProps,
+  getBezierPath,
+  Edge, // Add this import
 } from 'reactflow'
 import 'reactflow/dist/style.css'
-import { Check, AlertTriangle, XCircle, Sun, Moon, BookOpen, ChevronDown, Info, Download, Image, FileCode, FileJson } from 'lucide-react'
+import { Sun, Moon, BookOpen, ChevronDown, Info, Download, Image, FileCode, FileJson } from 'lucide-react'
 import yaml from 'js-yaml'
 import dagre from 'dagre';
 import { editor } from 'monaco-editor';  // Add this import if not already present
 import { saveAs } from 'file-saver';
 import html2canvas from 'html2canvas';
+import { Onboarding } from './Onboarding';
 
 const initialNodes: Node[] = []
 const initialEdges: Edge[] = []
-
-const statusColors = {
-  success: 'bg-green-500',
-  skipped: 'bg-yellow-500',
-  failed: 'bg-red-500',
-}
-
-const statusIcons = {
-  success: <Check className="w-4 h-4 text-white" />,
-  skipped: <AlertTriangle className="w-4 h-4 text-white" />,
-  failed: <XCircle className="w-4 h-4 text-white" />,
-}
 
 // Add this interface near the top of the file, after the imports
 interface CustomNodeData {
@@ -55,25 +41,35 @@ interface CustomNodeData {
 }
 
 const CustomNode = ({ data }: { data: CustomNodeData }) => {
+  const nodeRef = useRef<HTMLDivElement>(null);
+  const [nodeWidth, setNodeWidth] = useState(160); // Default width
+
+  useEffect(() => {
+    if (nodeRef.current) {
+      const labelWidth = nodeRef.current.querySelector('.label')?.scrollWidth || 0;
+      const operatorWidth = nodeRef.current.querySelector('.operator')?.scrollWidth || 0;
+      const contentWidth = Math.max(labelWidth, operatorWidth);
+      setNodeWidth(Math.max(160, contentWidth + 40)); // 40px for padding and border
+    }
+  }, [data.label, data.operator]);
+
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden ${data.status ? statusColors[data.status] : ''}`}>
-      <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-        <div className="font-medium text-sm text-gray-700 dark:text-gray-300">{data.label}</div>
+    <div 
+      ref={nodeRef}
+      className="bg-white rounded-md shadow-md overflow-hidden border-2 border-blue-500" 
+      style={{ width: nodeWidth }}
+    >
+      <div className="px-3 py-2 bg-blue-50">
+        <div className="label font-semibold text-s text-blue-900 whitespace-nowrap" title={data.label}>{data.label}</div>
       </div>
-      <div className="px-4 py-2">
-        <div className="text-xs text-gray-500 dark:text-gray-400">{data.operator}</div>
-        {data.status && (
-          <div className="mt-1 flex items-center">
-            {statusIcons[data.status]}
-            <span className="ml-1 text-xs capitalize">{data.status}</span>
-          </div>
-        )}
+      <div className="px-3 py-2">
+        <div className="operator text-sm text-gray-800 whitespace-nowrap" title={data.operator}>{data.operator}</div>
       </div>
       <Handle type="target" position={Position.Left} className="w-2 h-2 !bg-blue-500" />
       <Handle type="source" position={Position.Right} className="w-2 h-2 !bg-blue-500" />
     </div>
-  )
-}
+  );
+};
 
 const nodeTypes = {
   custom: CustomNode,
@@ -177,6 +173,18 @@ function exportDagLineage(reactFlowInstance: ReactFlowInstance | null, dagId: st
   });
 }
 
+// Update the DotGrid component for better customization
+const DotGrid = ({ isDarkMode }: { isDarkMode: boolean }) => {
+  return (
+    <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <pattern id="dot-pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+        <circle cx="1" cy="1" r="1" fill={isDarkMode ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.2)"} />
+      </pattern>
+      <rect width="100%" height="100%" fill="url(#dot-pattern)" />
+    </svg>
+  );
+};
+
 function DAGVisualizerContent() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
@@ -208,25 +216,26 @@ dependencies:
   - ['email_task', 'end_task']`)
   const { fitView } = useReactFlow()
 
-  const onConnect = useCallback((params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges])
+  // Remove this line as we won't be using onConnect anymore
+  // const onConnect = useCallback((params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges])
 
+  // Update the getLayoutedElements function to use the new node width
   const getLayoutedElements = useCallback((
     nodes: Node[], 
     edges: Edge[], 
-    direction = 'LR',
-    rankSeparation = 50,
-    nodeSeparation = 25
+    direction = 'LR'
   ) => {
     const dagreGraph = new dagre.graphlib.Graph();
     dagreGraph.setDefaultEdgeLabel(() => ({}));
 
-    const nodeWidth = 172;
-    const nodeHeight = 86;
-
-    dagreGraph.setGraph({ rankdir: direction, ranksep: rankSeparation, nodesep: nodeSeparation });
+    dagreGraph.setGraph({ 
+      rankdir: direction,
+      ranksep: 150, // Increase vertical separation between ranks
+      nodesep: 100  // Increase horizontal separation between nodes
+    });
 
     nodes.forEach((node) => {
-      dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
+      dagreGraph.setNode(node.id, { width: node.width || 160, height: 80 });
     });
 
     edges.forEach((edge) => {
@@ -240,8 +249,8 @@ dependencies:
       return {
         ...node,
         position: {
-          x: nodeWithPosition.x - nodeWidth / 2,
-          y: nodeWithPosition.y - nodeHeight / 2,
+          x: nodeWithPosition.x - (node.width || 160) / 2,
+          y: nodeWithPosition.y - 80 / 2,
         },
       };
     });
@@ -278,11 +287,11 @@ dependencies:
           target: dep[1],
           type: 'smoothstep',
           animated: true,
-          style: { stroke: '#b1b1b7' },
+          style: { stroke: isDarkMode ? '#b1b1b7' : '#666666' },
         }));
       }
 
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges, 'LR', 50, 25);
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges, 'LR');
 
       // Clear existing nodes and edges before setting new ones
       setNodes([])
@@ -352,8 +361,8 @@ dependencies:
   useEffect(() => {
     if (nodes.length > 0) {
       setTimeout(() => {
-        fitView({ padding: 0.2, includeHiddenNodes: true })
-      }, 0)
+        fitView();
+      }, 0);
     }
   }, [nodes, fitView])
 
@@ -859,6 +868,51 @@ update_metadata >> end`
     }
   }, [mode]);
 
+  // Update the CustomEdge component
+  const CustomEdge = useCallback(({
+    id,
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    sourcePosition,
+    targetPosition,
+    style = {},
+    markerEnd,
+  }: EdgeProps) => {
+    const [edgePath] = getBezierPath({
+      sourceX,
+      sourceY,
+      sourcePosition,
+      targetX,
+      targetY,
+      targetPosition,
+    });
+
+    // Define colors for light and dark modes
+    const lightModeColor = '#3b82f6'; // Blue color
+    const darkModeColor = '#60a5fa'; // Lighter blue color for better visibility in dark mode
+
+    return (
+      <path
+        id={id}
+        style={{
+          ...style,
+          strokeWidth: 10,
+          stroke: isDarkMode ? darkModeColor : lightModeColor,
+        }}
+        className="react-flow__edge-path"
+        d={edgePath}
+        markerEnd={markerEnd}
+      />
+    );
+  }, [isDarkMode]);
+
+  // Make sure to add this to your edge types
+  const edgeTypes = {
+    custom: CustomEdge,
+  };
+
   return (
     <>
       <Head>
@@ -982,6 +1036,7 @@ update_metadata >> end`
             <div className="flex items-center space-x-2">
               <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>DAGML</span>
               <button
+                id="mode-toggle"
                 onClick={toggleMode}
                 className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
                   mode === 'bitshift' ? 'bg-blue-600' : 'bg-gray-300'
@@ -996,7 +1051,7 @@ update_metadata >> end`
               <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Bitshift ≫</span>
             </div>
             {mode === 'dagml' && (
-              <div className="relative" ref={exportDropdownRef}>
+              <div id="export-button" className="relative" ref={exportDropdownRef}>
                 <button
                   onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
                   className={`px-3 py-2 rounded ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'} flex items-center`}
@@ -1043,7 +1098,7 @@ update_metadata >> end`
 
         {/* Main content */}
         <div className="flex flex-grow relative" ref={containerRef}>
-          <div style={{ width: `${editorWidth}%` }} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} overflow-hidden flex flex-col`}>
+          <div id="editor" style={{ width: `${editorWidth}%` }} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} overflow-hidden flex flex-col`}>
             <div className={`flex-grow border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg m-4 overflow-hidden shadow-lg`}>
               <Editor
                 height="100%"
@@ -1062,7 +1117,7 @@ update_metadata >> end`
               />
             </div>
             {/* REPL output section */}
-            <div className={`h-48 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg mx-4 mb-4 overflow-hidden shadow-lg`}>
+            <div id="repl-output" className={`h-48 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg mx-4 mb-4 overflow-hidden shadow-lg`}>
               <div className={`p-2 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'}`}>
                 REPL Output
               </div>
@@ -1072,12 +1127,13 @@ update_metadata >> end`
             </div>
           </div>
           <div
-            className={`w-1 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} cursor-col-resize hover:bg-blue-500 transition-colors`}
+            className={`w-1 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} cursor-col-resize hover:bg-blue-600 transition-colors`}
             onMouseDown={handleMouseDown}
           ></div>
           <div style={{ width: `${100 - editorWidth}%` }} className="p-4 flex flex-col">
             <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
               <button
+                id="graph"
                 className={`py-2 px-4 flex items-center ${rightSideTab === 'graph' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
                 onClick={() => setRightSideTab('graph')}
               >
@@ -1094,6 +1150,7 @@ update_metadata >> end`
               </button>
               {mode === 'dagml' && (
                 <button
+                  id="code-tab"
                   className={`py-2 px-4 flex items-center ${rightSideTab === 'python' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
                   onClick={() => setRightSideTab('python')}
                 >
@@ -1103,21 +1160,24 @@ update_metadata >> end`
               )}
             </div>
             {rightSideTab === 'graph' || mode !== 'dagml' ? (
-              <div className={`flex-grow ${isDarkMode ? 'bg-gray-900' : 'bg-white'} rounded-lg shadow-md overflow-hidden`}>
+              <div className={`flex-grow ${isDarkMode ? 'bg-gray-900' : 'bg-gray-200'} rounded-lg shadow-md overflow-hidden`}>
                 <ReactFlow
                   nodes={nodes}
                   edges={edges}
                   onNodesChange={onNodesChange}
                   onEdgesChange={onEdgesChange}
-                  onConnect={onConnect}
                   connectionMode={ConnectionMode.Loose}
                   nodeTypes={nodeTypes}
+                  edgeTypes={edgeTypes}
                   fitView
-                  fitViewOptions={{ padding: 0.2 }}
-                  className={isDarkMode ? 'react-flow-dark' : ''}
+                  fitViewOptions={{ padding: 0.1 }}
+                  className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}
+                  nodesConnectable={false}
+                  edgesUpdatable={true}
+                  nodesDraggable={true}
                 >
                   <Controls />
-                  <Background color={isDarkMode ? "#333333" : "#f0f0f0"} gap={16} />
+                  <DotGrid isDarkMode={isDarkMode} />
                 </ReactFlow>
               </div>
             ) : (
@@ -1140,6 +1200,7 @@ update_metadata >> end`
           </div>
         </div>
       </div>
+      <Onboarding />
     </>
   )
 }

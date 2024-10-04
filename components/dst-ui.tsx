@@ -970,48 +970,49 @@ update_metadata >> end`
             </button>
             <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Bitshift ≫</span>
           </div>
-          <div className="relative" ref={exportDropdownRef}>
-            <button
-              onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
-              className={`px-3 py-2 rounded ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'} flex items-center`}
-              disabled={mode !== 'dagml'}
-            >
-              <Download size={16} className="mr-2" />
-              Export
-              <ChevronDown size={16} className="ml-2" />
-            </button>
-            {isExportDropdownOpen && (
-              <div className={`absolute right-0 mt-2 w-56 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-700' : 'bg-white'} ring-1 ring-black ring-opacity-5 z-20`}>
-                <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                  <button
-                    onClick={() => { handleExport('lineage'); setIsExportDropdownOpen(false); }}
-                    className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
-                    role="menuitem"
-                  >
-                    {/* eslint-disable-next-line jsx-a11y/alt-text */}
-                    <Image size={16} className="mr-2" />
-                    DAG Lineage (PNG)
-                  </button>
-                  <button
-                    onClick={() => { handleExport('python'); setIsExportDropdownOpen(false); }}
-                    className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
-                    role="menuitem"
-                  >
-                    <FileCode size={16} className="mr-2" />
-                    Python Skeleton (.py)
-                  </button>
-                  <button
-                    onClick={() => { handleExport('dagml'); setIsExportDropdownOpen(false); }}
-                    className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
-                    role="menuitem"
-                  >
-                    <FileJson size={16} className="mr-2" />
-                    DAGML File (.dagml)
-                  </button>
+          {mode === 'dagml' && (
+            <div className="relative" ref={exportDropdownRef}>
+              <button
+                onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
+                className={`px-3 py-2 rounded ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'} flex items-center`}
+              >
+                <Download size={16} className="mr-2" />
+                Export
+                <ChevronDown size={16} className="ml-2" />
+              </button>
+              {isExportDropdownOpen && (
+                <div className={`absolute right-0 mt-2 w-56 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-700' : 'bg-white'} ring-1 ring-black ring-opacity-5 z-20`}>
+                  <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                    <button
+                      onClick={() => { handleExport('lineage'); setIsExportDropdownOpen(false); }}
+                      className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
+                      role="menuitem"
+                    >
+                      {/* eslint-disable-next-line jsx-a11y/alt-text */}
+                      <Image size={16} className="mr-2" />
+                      DAG Lineage (PNG)
+                    </button>
+                    <button
+                      onClick={() => { handleExport('python'); setIsExportDropdownOpen(false); }}
+                      className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
+                      role="menuitem"
+                    >
+                      <FileCode size={16} className="mr-2" />
+                      Python Skeleton (.py)
+                    </button>
+                    <button
+                      onClick={() => { handleExport('dagml'); setIsExportDropdownOpen(false); }}
+                      className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
+                      role="menuitem"
+                    >
+                      <FileJson size={16} className="mr-2" />
+                      DAGML File (.dagml)
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       </nav>
 

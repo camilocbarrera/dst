@@ -296,6 +296,10 @@ dependencies:
       // Update REPL output
       setReplOutput(JSON.stringify(parsedYAML, null, 2))
 
+      // Generate Python code
+      const pythonCode = generatePythonDAG(parsedYAML);
+      setGeneratedPythonCode(pythonCode);
+
     } catch (error) {
       console.error('Error parsing YAML:', error)
       setReplOutput(`Error parsing YAML: ${error}`)
@@ -845,6 +849,9 @@ update_metadata >> end`
     };
   }, []);
 
+  const [generatedPythonCode, setGeneratedPythonCode] = useState('');
+  const [activeTab, setActiveTab] = useState<'dagml' | 'python'>('dagml');
+
   return (
     <div className={`flex flex-col h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       {/* Navbar */}
@@ -998,7 +1005,7 @@ update_metadata >> end`
                       role="menuitem"
                     >
                       <FileCode size={16} className="mr-2" />
-                      Python Skeleton (.py)
+                      View Python Skeleton
                     </button>
                     <button
                       onClick={() => { handleExport('dagml'); setIsExportDropdownOpen(false); }}
@@ -1019,32 +1026,87 @@ update_metadata >> end`
       {/* Main content */}
       <div className="flex flex-grow relative" ref={containerRef}>
         <div style={{ width: `${editorWidth}%` }} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} overflow-hidden flex flex-col`}>
-          <div className={`flex-grow border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg m-4 overflow-hidden shadow-lg`}>
-            <Editor
-              height="100%"
-              language={mode === 'dagml' ? "yaml" : "bitshift"}
-              theme={isDarkMode ? "vs-dark" : "light"}
-              value={input}
-              options={{
-                ...editorOptions,
-                automaticLayout: true,
-                tabSize: 2,
-              }}
-              onChange={handleEditorChange}
-              beforeMount={handleEditorWillMount}
-              onMount={handleEditorDidMount}
-              className="rounded-lg"
-            />
-          </div>
-          {/* REPL output section with fixed height */}
-          <div className={`h-48 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg mx-4 mb-4 overflow-hidden shadow-lg`}>
-            <div className={`p-2 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'}`}>
-              REPL Output
+          {mode === 'dagml' && (
+            <div className="flex border-b border-gray-200 dark:border-gray-700">
+              <button
+                className={`py-2 px-4 ${activeTab === 'dagml' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                onClick={() => setActiveTab('dagml')}
+              >
+                DAGML
+              </button>
+              <button
+                className={`py-2 px-4 ${activeTab === 'python' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                onClick={() => setActiveTab('python')}
+              >
+                Python
+              </button>
             </div>
-            <pre className={`p-4 overflow-auto h-[calc(100%-2rem)] ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
-              {replOutput}
-            </pre>
+          )}
+          <div className={`flex-grow border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg m-4 overflow-hidden shadow-lg`}>
+            {mode === 'dagml' ? (
+              <>
+                {activeTab === 'dagml' && (
+                  <Editor
+                    height="100%"
+                    language="yaml"
+                    theme={isDarkMode ? "vs-dark" : "light"}
+                    value={input}
+                    options={{
+                      ...editorOptions,
+                      automaticLayout: true,
+                      tabSize: 2,
+                    }}
+                    onChange={handleEditorChange}
+                    beforeMount={handleEditorWillMount}
+                    onMount={handleEditorDidMount}
+                    className="rounded-lg"
+                  />
+                )}
+                {activeTab === 'python' && (
+                  <Editor
+                    height="100%"
+                    language="python"
+                    theme={isDarkMode ? "vs-dark" : "light"}
+                    value={generatedPythonCode}
+                    options={{
+                      ...editorOptions,
+                      automaticLayout: true,
+                      tabSize: 4,
+                      readOnly: true,
+                    }}
+                    className="rounded-lg"
+                  />
+                )}
+              </>
+            ) : (
+              <Editor
+                height="100%"
+                language="bitshift"
+                theme={isDarkMode ? "vs-dark" : "light"}
+                value={input}
+                options={{
+                  ...editorOptions,
+                  automaticLayout: true,
+                  tabSize: 2,
+                }}
+                onChange={handleEditorChange}
+                beforeMount={handleEditorWillMount}
+                onMount={handleEditorDidMount}
+                className="rounded-lg"
+              />
+            )}
           </div>
+          {/* REPL output section */}
+          {(mode !== 'dagml' || activeTab !== 'python') && (
+            <div className={`h-48 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg mx-4 mb-4 overflow-hidden shadow-lg`}>
+              <div className={`p-2 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'}`}>
+                REPL Output
+              </div>
+              <pre className={`p-4 overflow-auto h-[calc(100%-2rem)] ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
+                {replOutput}
+              </pre>
+            </div>
+          )}
         </div>
         <div
           className={`w-1 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} cursor-col-resize hover:bg-blue-500 transition-colors`}

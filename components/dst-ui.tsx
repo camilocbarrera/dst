@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import Editor, { Monaco, OnChange } from "@monaco-editor/react";
 // import type * as monaco from 'monaco-editor';
 import React from 'react'
+import Head from 'next/head';
 
 import ReactFlow, {
   Node,
@@ -859,275 +860,287 @@ update_metadata >> end`
   }, [mode]);
 
   return (
-    <div className={`flex flex-col h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
-      {/* Navbar */}
-      <nav className={`flex items-center p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-md relative z-10`}>
-        <div className="flex items-center space-x-4 flex-grow">
-          <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>DAG Sketch Tool 🎨</h1>
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className={`px-3 py-2 rounded ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'} flex items-center`}
-            >
-              <BookOpen size={16} className="mr-2" />
-              Examples
-              <ChevronDown size={16} className="ml-2" />
-            </button>
-            {isDropdownOpen && (
-              <div className={`absolute mt-2 w-48 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-700' : 'bg-white'} ring-1 ring-black ring-opacity-5 z-20`}>
-                <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                  <button
-                    onClick={() => loadExample('simple')}
-                    className={`block px-4 py-2 text-sm w-full text-left ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
-                    role="menuitem"
-                  >
-                    Simple Example
-                  </button>
-                  <button
-                    onClick={() => loadExample('complex')}
-                    className={`block px-4 py-2 text-sm w-full text-left ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
-                    role="menuitem"
-                  >
-                    Complex Example
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-          <div ref={infoRef}>
-            <button
-              onClick={() => setIsInfoOpen(!isInfoOpen)}
-              className={`px-3 py-2 rounded ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'} flex items-center`}
-            >
-              <Info size={16} className="mr-2" />
-              Info
-            </button>
-            {isInfoOpen && (
-              <div className={`absolute top-16 left-4 w-96 p-4 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'} ring-1 ring-black ring-opacity-5 z-20`}>
-                <h2 className="text-lg font-semibold mb-4">DAG Sketch</h2>
-                
-                <section className="mb-4">
-                  <p className="mb-2">
-                    An open-source tool for visualizing Directed Acyclic Graphs (DAGs) from YAML-based DAGML definitions.
-                  </p>
-                  <p>
-                    DAGML (DAG Markup Language) is a YAML-based format for defining DAGs, commonly used in workflow orchestration tools like Apache Airflow.
-                  </p>
-                </section>
-
-                <section className="mb-4">
-                  <h3 className="text-md font-semibold mb-2">Bitshift Mode</h3>
-                  <p>
-                    In Airflow, the <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">{'>>'}</code> operators (called bitshift operators) are used to define task dependencies. Use this syntax in Bitshift mode.
-                  </p>
-                </section>
-
-                <section className="mb-4">
-                  <h3 className="text-md font-semibold mb-2">Instructions</h3>
-                  <ol className="list-decimal list-inside space-y-1">
-                    <li>Write or paste your DAGML definition in the left editor.</li>
-                    <li>The visualization updates in real-time on the right.</li>
-                    <li>Use the Examples dropdown for sample DAGML structures.</li>
-                    <li>Toggle between DAGML and Bitshift modes for different syntax.</li>
-                  </ol>
-                </section>
-
-                <section className="flex flex-col space-y-2">
-                  <a
-                    href="https://github.com/camilocbarrera/dst"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`text-blue-500 hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
-                  >
-                    GitHub Repository
-                  </a>
-                  <a
-                    href="https://github.com/camilocbarrera/dst/issues"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`text-blue-500 hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
-                  >
-                    Report Issues
-                  </a>
-                  <a 
-                    href="https://stackoverflow.com/questions/52389105/how-operator-defines-task-dependencies-in-airflow"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`text-blue-500 hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
-                  >
-                    Learn more about bitshift operators in Airflow
-                  </a>
-                </section>
-              </div>
-            )}
-          </div>
-          <button
-            onClick={toggleDarkMode}
-            className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-200 text-gray-800'}`}
-          >
-            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
-          <div className="flex items-center space-x-2">
-            <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>DAGML</span>
-            <button
-              onClick={toggleMode}
-              className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
-                mode === 'bitshift' ? 'bg-blue-600' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`inline-block w-4 h-4 transform transition-transform bg-white rounded-full ${
-                  mode === 'bitshift' ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-            <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Bitshift ≫</span>
-          </div>
-          {mode === 'dagml' && (
-            <div className="relative" ref={exportDropdownRef}>
+    <>
+      <Head>
+        <title>DAG Sketch Tool - Visualize and Design Airflow DAGs</title>
+        <meta name="description" content="An open-source tool for visualizing and designing Directed Acyclic Graphs (DAGs) using YAML-based DAGML or Airflow-style bitshift syntax. You can also generate the code for your DAGs." />
+        <meta name="keywords" content="DAG, Directed Acyclic Graph, Apache Airflow, DAGML, Data Visualization, Workflow Management, Data Pipeline Design, Workflow Automation, Data Engineering, ETL Processes, Task Scheduling, Data Pipeline Visualization, Cloud Computing, Open Source Tools" />
+        <meta name="author" content="Cristian Correa" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="canonical" href="https://www.dag-sketch.com" />
+      </Head>
+      <div className={`flex flex-col h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
+        {/* Navbar */}
+        <nav className={`flex items-center p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-md relative z-10`}>
+          <div className="flex items-center space-x-4 flex-grow">
+            <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>DAG Sketch Tool 🎨</h1>
+            <div className="relative" ref={dropdownRef}>
               <button
-                onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className={`px-3 py-2 rounded ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'} flex items-center`}
+                aria-haspopup="true"
+                aria-expanded={isDropdownOpen}
               >
-                <Download size={16} className="mr-2" />
-                Export
-                <ChevronDown size={16} className="ml-2" />
+                <BookOpen size={16} className="mr-2" aria-hidden="true" />
+                <span>Examples</span>
+                <ChevronDown size={16} className="ml-2" aria-hidden="true" />
               </button>
-              {isExportDropdownOpen && (
-                <div className={`absolute right-0 mt-2 w-56 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-700' : 'bg-white'} ring-1 ring-black ring-opacity-5 z-20`}>
+              {isDropdownOpen && (
+                <div className={`absolute mt-2 w-48 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-700' : 'bg-white'} ring-1 ring-black ring-opacity-5 z-20`}>
                   <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
                     <button
-                      onClick={() => { handleExport('lineage'); setIsExportDropdownOpen(false); }}
-                      className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
+                      onClick={() => loadExample('simple')}
+                      className={`block px-4 py-2 text-sm w-full text-left ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
                       role="menuitem"
                     >
-                      {/* eslint-disable-next-line jsx-a11y/alt-text */}
-                      <Image size={16} className="mr-2" />
-                      DAG Lineage (PNG)
+                      Simple Example
                     </button>
                     <button
-                      onClick={() => { handleExport('python'); setIsExportDropdownOpen(false); }}
-                      className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
+                      onClick={() => loadExample('complex')}
+                      className={`block px-4 py-2 text-sm w-full text-left ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
                       role="menuitem"
                     >
-                      <FileCode size={16} className="mr-2" />
-                      View Python Skeleton
-                    </button>
-                    <button
-                      onClick={() => { handleExport('dagml'); setIsExportDropdownOpen(false); }}
-                      className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
-                      role="menuitem"
-                    >
-                      <FileJson size={16} className="mr-2" />
-                      DAGML File (.dagml)
+                      Complex Example
                     </button>
                   </div>
                 </div>
               )}
             </div>
-          )}
-        </div>
-      </nav>
-
-      {/* Main content */}
-      <div className="flex flex-grow relative" ref={containerRef}>
-        <div style={{ width: `${editorWidth}%` }} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} overflow-hidden flex flex-col`}>
-          <div className={`flex-grow border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg m-4 overflow-hidden shadow-lg`}>
-            <Editor
-              height="100%"
-              language={mode === 'dagml' ? "yaml" : "bitshift"}
-              theme={isDarkMode ? "vs-dark" : "light"}
-              value={input}
-              options={{
-                ...editorOptions,
-                automaticLayout: true,
-                tabSize: 2,
-              }}
-              onChange={handleEditorChange}
-              beforeMount={handleEditorWillMount}
-              onMount={handleEditorDidMount}
-              className="rounded-lg"
-            />
-          </div>
-          {/* REPL output section */}
-          <div className={`h-48 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg mx-4 mb-4 overflow-hidden shadow-lg`}>
-            <div className={`p-2 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'}`}>
-              REPL Output
-            </div>
-            <pre className={`p-4 overflow-auto h-[calc(100%-2rem)] ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
-              {replOutput}
-            </pre>
-          </div>
-        </div>
-        <div
-          className={`w-1 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} cursor-col-resize hover:bg-blue-500 transition-colors`}
-          onMouseDown={handleMouseDown}
-        ></div>
-        <div style={{ width: `${100 - editorWidth}%` }} className="p-4 flex flex-col">
-          <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
-            <button
-              className={`py-2 px-4 flex items-center ${rightSideTab === 'graph' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-              onClick={() => setRightSideTab('graph')}
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="4" cy="4" r="2" />
-                <circle cx="12" cy="12" r="2" />
-                <circle cx="20" cy="4" r="2" />
-                <circle cx="20" cy="20" r="2" />
-                <line x1="4" y1="4" x2="12" y2="12" />
-                <line x1="12" y1="12" x2="20" y2="4" />
-                <line x1="12" y1="12" x2="20" y2="20" />
-              </svg>
-              Graph
-            </button>
-            {mode === 'dagml' && (
+            <div ref={infoRef}>
               <button
-                className={`py-2 px-4 flex items-center ${rightSideTab === 'python' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-                onClick={() => setRightSideTab('python')}
+                onClick={() => setIsInfoOpen(!isInfoOpen)}
+                className={`px-3 py-2 rounded ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'} flex items-center`}
               >
-                <FileCode size={20} className="mr-2" />
-                Code
+                <Info size={16} className="mr-2" />
+                Info
               </button>
+              {isInfoOpen && (
+                <div className={`absolute top-16 left-4 w-96 p-4 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'} ring-1 ring-black ring-opacity-5 z-20`}>
+                  <h2 className="text-lg font-semibold mb-4">DAG Sketch</h2>
+                  
+                  <section className="mb-4">
+                    <p className="mb-2">
+                      An open-source tool for visualizing Directed Acyclic Graphs (DAGs) from YAML-based DAGML definitions.
+                    </p>
+                    <p>
+                      DAGML (DAG Markup Language) is a YAML-based format for defining DAGs, commonly used in workflow orchestration tools like Apache Airflow.
+                    </p>
+                  </section>
+
+                  <section className="mb-4">
+                    <h3 className="text-md font-semibold mb-2">Bitshift Mode</h3>
+                    <p>
+                      In Airflow, the <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">{'>>'}</code> operators (called bitshift operators) are used to define task dependencies. Use this syntax in Bitshift mode.
+                    </p>
+                  </section>
+
+                  <section className="mb-4">
+                    <h3 className="text-md font-semibold mb-2">Instructions</h3>
+                    <ol className="list-decimal list-inside space-y-1">
+                      <li>Write or paste your DAGML definition in the left editor.</li>
+                      <li>The visualization updates in real-time on the right.</li>
+                      <li>Use the Examples dropdown for sample DAGML structures.</li>
+                      <li>Toggle between DAGML and Bitshift modes for different syntax.</li>
+                    </ol>
+                  </section>
+
+                  <section className="flex flex-col space-y-2">
+                    <a
+                      href="https://github.com/camilocbarrera/dst"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`text-blue-500 hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
+                    >
+                      GitHub Repository
+                    </a>
+                    <a
+                      href="https://github.com/camilocbarrera/dst/issues"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`text-blue-500 hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
+                    >
+                      Report Issues
+                    </a>
+                    <a 
+                      href="https://stackoverflow.com/questions/52389105/how-operator-defines-task-dependencies-in-airflow"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`text-blue-500 hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
+                    >
+                      Learn more about bitshift operators in Airflow
+                    </a>
+                  </section>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={toggleDarkMode}
+              className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-200 text-gray-800'}`}
+            >
+              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            <div className="flex items-center space-x-2">
+              <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>DAGML</span>
+              <button
+                onClick={toggleMode}
+                className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
+                  mode === 'bitshift' ? 'bg-blue-600' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`inline-block w-4 h-4 transform transition-transform bg-white rounded-full ${
+                    mode === 'bitshift' ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Bitshift ≫</span>
+            </div>
+            {mode === 'dagml' && (
+              <div className="relative" ref={exportDropdownRef}>
+                <button
+                  onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
+                  className={`px-3 py-2 rounded ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'} flex items-center`}
+                >
+                  <Download size={16} className="mr-2" />
+                  Export
+                  <ChevronDown size={16} className="ml-2" />
+                </button>
+                {isExportDropdownOpen && (
+                  <div className={`absolute right-0 mt-2 w-56 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-700' : 'bg-white'} ring-1 ring-black ring-opacity-5 z-20`}>
+                    <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                      <button
+                        onClick={() => { handleExport('lineage'); setIsExportDropdownOpen(false); }}
+                        className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
+                        role="menuitem"
+                      >
+                        {/* eslint-disable-next-line jsx-a11y/alt-text */}
+                        <Image size={16} className="mr-2" />
+                        DAG Lineage (PNG)
+                      </button>
+                      <button
+                        onClick={() => { handleExport('python'); setIsExportDropdownOpen(false); }}
+                        className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
+                        role="menuitem"
+                      >
+                        <FileCode size={16} className="mr-2" />
+                        Python Skeleton (.py)
+                      </button>
+                      <button
+                        onClick={() => { handleExport('dagml'); setIsExportDropdownOpen(false); }}
+                        className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
+                        role="menuitem"
+                      >
+                        <FileJson size={16} className="mr-2" />
+                        DAGML File (.dagml)
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
-          {rightSideTab === 'graph' || mode !== 'dagml' ? (
-            <div className={`flex-grow ${isDarkMode ? 'bg-gray-900' : 'bg-white'} rounded-lg shadow-md overflow-hidden`}>
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                connectionMode={ConnectionMode.Loose}
-                nodeTypes={nodeTypes}
-                fitView
-                fitViewOptions={{ padding: 0.2 }}
-                className={isDarkMode ? 'react-flow-dark' : ''}
-              >
-                <Controls />
-                <Background color={isDarkMode ? "#333333" : "#f0f0f0"} gap={16} />
-              </ReactFlow>
-            </div>
-          ) : (
-            <div className={`flex-grow border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg overflow-hidden shadow-lg`}>
+        </nav>
+
+        {/* Main content */}
+        <div className="flex flex-grow relative" ref={containerRef}>
+          <div style={{ width: `${editorWidth}%` }} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} overflow-hidden flex flex-col`}>
+            <div className={`flex-grow border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg m-4 overflow-hidden shadow-lg`}>
               <Editor
                 height="100%"
-                language="python"
+                language={mode === 'dagml' ? "yaml" : "bitshift"}
                 theme={isDarkMode ? "vs-dark" : "light"}
-                value={generatedPythonCode}
+                value={input}
                 options={{
                   ...editorOptions,
                   automaticLayout: true,
-                  tabSize: 4,
-                  readOnly: true,
+                  tabSize: 2,
                 }}
+                onChange={handleEditorChange}
+                beforeMount={handleEditorWillMount}
+                onMount={handleEditorDidMount}
                 className="rounded-lg"
               />
             </div>
-          )}
+            {/* REPL output section */}
+            <div className={`h-48 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg mx-4 mb-4 overflow-hidden shadow-lg`}>
+              <div className={`p-2 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'}`}>
+                REPL Output
+              </div>
+              <pre className={`p-4 overflow-auto h-[calc(100%-2rem)] ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
+                {replOutput}
+              </pre>
+            </div>
+          </div>
+          <div
+            className={`w-1 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} cursor-col-resize hover:bg-blue-500 transition-colors`}
+            onMouseDown={handleMouseDown}
+          ></div>
+          <div style={{ width: `${100 - editorWidth}%` }} className="p-4 flex flex-col">
+            <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+              <button
+                className={`py-2 px-4 flex items-center ${rightSideTab === 'graph' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                onClick={() => setRightSideTab('graph')}
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="4" cy="4" r="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="20" cy="4" r="2" />
+                  <circle cx="20" cy="20" r="2" />
+                  <line x1="4" y1="4" x2="12" y2="12" />
+                  <line x1="12" y1="12" x2="20" y2="4" />
+                  <line x1="12" y1="12" x2="20" y2="20" />
+                </svg>
+                Graph
+              </button>
+              {mode === 'dagml' && (
+                <button
+                  className={`py-2 px-4 flex items-center ${rightSideTab === 'python' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                  onClick={() => setRightSideTab('python')}
+                >
+                  <FileCode size={20} className="mr-2" />
+                  Code
+                </button>
+              )}
+            </div>
+            {rightSideTab === 'graph' || mode !== 'dagml' ? (
+              <div className={`flex-grow ${isDarkMode ? 'bg-gray-900' : 'bg-white'} rounded-lg shadow-md overflow-hidden`}>
+                <ReactFlow
+                  nodes={nodes}
+                  edges={edges}
+                  onNodesChange={onNodesChange}
+                  onEdgesChange={onEdgesChange}
+                  onConnect={onConnect}
+                  connectionMode={ConnectionMode.Loose}
+                  nodeTypes={nodeTypes}
+                  fitView
+                  fitViewOptions={{ padding: 0.2 }}
+                  className={isDarkMode ? 'react-flow-dark' : ''}
+                >
+                  <Controls />
+                  <Background color={isDarkMode ? "#333333" : "#f0f0f0"} gap={16} />
+                </ReactFlow>
+              </div>
+            ) : (
+              <div className={`flex-grow border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg overflow-hidden shadow-lg`}>
+                <Editor
+                  height="100%"
+                  language="python"
+                  theme={isDarkMode ? "vs-dark" : "light"}
+                  value={generatedPythonCode}
+                  options={{
+                    ...editorOptions,
+                    automaticLayout: true,
+                    tabSize: 4,
+                    readOnly: true,
+                  }}
+                  className="rounded-lg"
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 

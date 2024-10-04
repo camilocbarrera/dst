@@ -850,7 +850,13 @@ update_metadata >> end`
   }, []);
 
   const [generatedPythonCode, setGeneratedPythonCode] = useState('');
-  const [activeTab, setActiveTab] = useState<'dagml' | 'python'>('dagml');
+  const [rightSideTab, setRightSideTab] = useState<'graph' | 'python'>('graph');
+
+  useEffect(() => {
+    if (mode !== 'dagml') {
+      setRightSideTab('graph');
+    }
+  }, [mode]);
 
   return (
     <div className={`flex flex-col h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
@@ -1026,110 +1032,99 @@ update_metadata >> end`
       {/* Main content */}
       <div className="flex flex-grow relative" ref={containerRef}>
         <div style={{ width: `${editorWidth}%` }} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} overflow-hidden flex flex-col`}>
-          {mode === 'dagml' && (
-            <div className="flex border-b border-gray-200 dark:border-gray-700">
-              <button
-                className={`py-2 px-4 ${activeTab === 'dagml' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-                onClick={() => setActiveTab('dagml')}
-              >
-                DAGML
-              </button>
-              <button
-                className={`py-2 px-4 ${activeTab === 'python' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-                onClick={() => setActiveTab('python')}
-              >
-                Python
-              </button>
-            </div>
-          )}
           <div className={`flex-grow border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg m-4 overflow-hidden shadow-lg`}>
-            {mode === 'dagml' ? (
-              <>
-                {activeTab === 'dagml' && (
-                  <Editor
-                    height="100%"
-                    language="yaml"
-                    theme={isDarkMode ? "vs-dark" : "light"}
-                    value={input}
-                    options={{
-                      ...editorOptions,
-                      automaticLayout: true,
-                      tabSize: 2,
-                    }}
-                    onChange={handleEditorChange}
-                    beforeMount={handleEditorWillMount}
-                    onMount={handleEditorDidMount}
-                    className="rounded-lg"
-                  />
-                )}
-                {activeTab === 'python' && (
-                  <Editor
-                    height="100%"
-                    language="python"
-                    theme={isDarkMode ? "vs-dark" : "light"}
-                    value={generatedPythonCode}
-                    options={{
-                      ...editorOptions,
-                      automaticLayout: true,
-                      tabSize: 4,
-                      readOnly: true,
-                    }}
-                    className="rounded-lg"
-                  />
-                )}
-              </>
-            ) : (
-              <Editor
-                height="100%"
-                language="bitshift"
-                theme={isDarkMode ? "vs-dark" : "light"}
-                value={input}
-                options={{
-                  ...editorOptions,
-                  automaticLayout: true,
-                  tabSize: 2,
-                }}
-                onChange={handleEditorChange}
-                beforeMount={handleEditorWillMount}
-                onMount={handleEditorDidMount}
-                className="rounded-lg"
-              />
-            )}
+            <Editor
+              height="100%"
+              language={mode === 'dagml' ? "yaml" : "bitshift"}
+              theme={isDarkMode ? "vs-dark" : "light"}
+              value={input}
+              options={{
+                ...editorOptions,
+                automaticLayout: true,
+                tabSize: 2,
+              }}
+              onChange={handleEditorChange}
+              beforeMount={handleEditorWillMount}
+              onMount={handleEditorDidMount}
+              className="rounded-lg"
+            />
           </div>
           {/* REPL output section */}
-          {(mode !== 'dagml' || activeTab !== 'python') && (
-            <div className={`h-48 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg mx-4 mb-4 overflow-hidden shadow-lg`}>
-              <div className={`p-2 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'}`}>
-                REPL Output
-              </div>
-              <pre className={`p-4 overflow-auto h-[calc(100%-2rem)] ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
-                {replOutput}
-              </pre>
+          <div className={`h-48 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg mx-4 mb-4 overflow-hidden shadow-lg`}>
+            <div className={`p-2 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'}`}>
+              REPL Output
             </div>
-          )}
+            <pre className={`p-4 overflow-auto h-[calc(100%-2rem)] ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
+              {replOutput}
+            </pre>
+          </div>
         </div>
         <div
           className={`w-1 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} cursor-col-resize hover:bg-blue-500 transition-colors`}
           onMouseDown={handleMouseDown}
         ></div>
-        <div style={{ width: `${100 - editorWidth}%` }} className="p-4">
-          <div className={`w-full h-full ${isDarkMode ? 'bg-gray-900' : 'bg-white'} rounded-lg shadow-md overflow-hidden`}>
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              connectionMode={ConnectionMode.Loose}
-              nodeTypes={nodeTypes}
-              fitView
-              fitViewOptions={{ padding: 0.2 }}
-              className={isDarkMode ? 'react-flow-dark' : ''}
+        <div style={{ width: `${100 - editorWidth}%` }} className="p-4 flex flex-col">
+          <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+            <button
+              className={`py-2 px-4 flex items-center ${rightSideTab === 'graph' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+              onClick={() => setRightSideTab('graph')}
             >
-              <Controls />
-              <Background color={isDarkMode ? "#333333" : "#f0f0f0"} gap={16} />
-            </ReactFlow>
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="4" cy="4" r="2" />
+                <circle cx="12" cy="12" r="2" />
+                <circle cx="20" cy="4" r="2" />
+                <circle cx="20" cy="20" r="2" />
+                <line x1="4" y1="4" x2="12" y2="12" />
+                <line x1="12" y1="12" x2="20" y2="4" />
+                <line x1="12" y1="12" x2="20" y2="20" />
+              </svg>
+              Graph
+            </button>
+            {mode === 'dagml' && (
+              <button
+                className={`py-2 px-4 flex items-center ${rightSideTab === 'python' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                onClick={() => setRightSideTab('python')}
+              >
+                <FileCode size={20} className="mr-2" />
+                Code
+              </button>
+            )}
           </div>
+          {rightSideTab === 'graph' || mode !== 'dagml' ? (
+            <div className={`flex-grow ${isDarkMode ? 'bg-gray-900' : 'bg-white'} rounded-lg shadow-md overflow-hidden`}>
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                connectionMode={ConnectionMode.Loose}
+                nodeTypes={nodeTypes}
+                fitView
+                fitViewOptions={{ padding: 0.2 }}
+                className={isDarkMode ? 'react-flow-dark' : ''}
+              >
+                <Controls />
+                <Background color={isDarkMode ? "#333333" : "#f0f0f0"} gap={16} />
+              </ReactFlow>
+            </div>
+          ) : (
+            <div className={`flex-grow border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg overflow-hidden shadow-lg`}>
+              <Editor
+                height="100%"
+                language="python"
+                theme={isDarkMode ? "vs-dark" : "light"}
+                value={generatedPythonCode}
+                options={{
+                  ...editorOptions,
+                  automaticLayout: true,
+                  tabSize: 4,
+                  readOnly: true,
+                }}
+                className="rounded-lg"
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

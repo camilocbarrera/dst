@@ -21,12 +21,15 @@ import ReactFlow, {
   ReactFlowProvider,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Node as ReactFlowNode,
+  ReactFlowInstance,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
-import { Check, AlertTriangle, XCircle, Sun, Moon, BookOpen, ChevronDown, Info } from 'lucide-react'
+import { Check, AlertTriangle, XCircle, Sun, Moon, BookOpen, ChevronDown, Info, Download, Image, FileCode, FileJson } from 'lucide-react'
 import yaml from 'js-yaml'
 import dagre from 'dagre';
 import { editor } from 'monaco-editor';  // Add this import if not already present
+import { saveAs } from 'file-saver';
+import html2canvas from 'html2canvas';
 
 const initialNodes: Node[] = []
 const initialEdges: Edge[] = []
@@ -77,13 +80,100 @@ const nodeTypes = {
 
 // Define an interface for the parsed YAML structure
 interface ParsedYAML {
+  dag?: {
+    dag_id?: string;
+    schedule_interval?: string;
+    start_date?: string;
+    default_args?: Record<string, unknown>;
+  };
   tasks?: Array<{
     task_id: string;
     operator: string;
-    [key: string]: string | number | boolean | object;  // Allow additional properties of various types
+    [key: string]: string | number | boolean | object;
   }>;
   dependencies?: Array<[string, string]>;
-  [key: string]: unknown;  // Allow additional top-level properties of unknown type
+  [key: string]: unknown;
+}
+
+function generatePythonDAG(dagml: ParsedYAML): string {
+  const operators = new Set(dagml.tasks?.map(task => task.operator) || []);
+  const operatorImports = Array.from(operators).map(operator => 
+    `from airflow.operators.${operator.toLowerCase()} import ${operator}`
+  ).join('\n');
+
+  const tasks = dagml.tasks?.map(task => {
+    let taskParams = '';
+    if (task.operator === 'BashOperator') {
+      taskParams = `bash_command='${task.bash_command}'`;
+    } else if (task.operator === 'PythonOperator') {
+      taskParams = `python_callable=${task.python_callable}`;
+    }
+    return `
+    ${task.task_id} = ${task.operator}(
+        task_id='${task.task_id}',
+        ${taskParams}
+    )`;
+  }).join('\n') || '';
+
+  const dependencies = dagml.dependencies?.map(dep => 
+    `    ${dep[0]} >> ${dep[1]}`
+  ).join('\n') || '';
+
+  const defaultArgs = dagml.dag?.default_args ? JSON.stringify(dagml.dag.default_args, null, 4) : '{}';
+
+  return `
+from airflow import DAG
+from datetime import datetime, timedelta
+${operatorImports}
+
+default_args = ${defaultArgs}
+
+with DAG(
+    '${dagml.dag?.dag_id || 'generated_dag'}',
+    default_args=default_args,
+    description='Generated DAG from DAGML',
+    schedule_interval='${dagml.dag?.schedule_interval || '@daily'}',
+    start_date=datetime.strptime('${dagml.dag?.start_date || '2024-01-01'}', '%Y-%m-%d'),
+    catchup=False,
+) as dag:
+
+    # Tasks definition
+${tasks}
+
+    # Dependencies
+${dependencies}
+`;
+}
+
+function exportDagLineage(reactFlowInstance: ReactFlowInstance | null, dagId: string) {
+  if (!reactFlowInstance) {
+    console.error('ReactFlow instance is not available');
+    return;
+  }
+
+  const reactFlowContainer = document.querySelector('.react-flow') as HTMLElement;
+  if (!reactFlowContainer) {
+    console.error('ReactFlow container not found');
+    return;
+  }
+
+  // Temporarily remove the 'overflow: hidden' style
+  const originalStyle = reactFlowContainer.style.overflow;
+  reactFlowContainer.style.overflow = 'visible';
+
+  html2canvas(reactFlowContainer, {
+    backgroundColor: null,
+    scale: 2, // Increase resolution
+  }).then((canvas) => {
+    // Restore the original style
+    reactFlowContainer.style.overflow = originalStyle;
+
+    canvas.toBlob((blob) => {
+      if (blob) {
+        saveAs(blob, `${dagId}_lineage.png`);
+      }
+    });
+  });
 }
 
 function DAGVisualizerContent() {
@@ -707,6 +797,54 @@ update_metadata >> end`
     parseInput(input)
   }, [input, parseInput])
 
+  const reactFlowInstance = useReactFlow();
+
+  const handleExport = (type: 'lineage' | 'python' | 'dagml') => {
+    if (mode !== 'dagml') {
+      alert('Export is only available in DAGML mode');
+      return;
+    }
+
+    try {
+      const dagml = yaml.load(input) as ParsedYAML;
+      const dagId = dagml.dag?.dag_id || 'generated_dag';
+      
+      switch (type) {
+        case 'lineage':
+          exportDagLineage(reactFlowInstance, dagId);
+          break;
+        case 'python':
+          const pythonCode = generatePythonDAG(dagml);
+          const pythonBlob = new Blob([pythonCode], { type: 'text/plain;charset=utf-8' });
+          saveAs(pythonBlob, `${dagId}.py`);
+          break;
+        case 'dagml':
+          const dagmlBlob = new Blob([input], { type: 'text/plain;charset=utf-8' });
+          saveAs(dagmlBlob, `${dagId}.dagml`);
+          break;
+      }
+    } catch (error) {
+      console.error('Error exporting DAG:', error);
+      alert('Error exporting DAG. Please check your DAGML syntax.');
+    }
+  };
+
+  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+  const exportDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target as Element)) {
+        setIsExportDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className={`flex flex-col h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       {/* Navbar */}
@@ -831,6 +969,48 @@ update_metadata >> end`
               />
             </button>
             <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Bitshift ≫</span>
+          </div>
+          <div className="relative" ref={exportDropdownRef}>
+            <button
+              onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
+              className={`px-3 py-2 rounded ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'} flex items-center`}
+              disabled={mode !== 'dagml'}
+            >
+              <Download size={16} className="mr-2" />
+              Export
+              <ChevronDown size={16} className="ml-2" />
+            </button>
+            {isExportDropdownOpen && (
+              <div className={`absolute right-0 mt-2 w-56 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-700' : 'bg-white'} ring-1 ring-black ring-opacity-5 z-20`}>
+                <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                  <button
+                    onClick={() => { handleExport('lineage'); setIsExportDropdownOpen(false); }}
+                    className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
+                    role="menuitem"
+                  >
+                    {/* eslint-disable-next-line jsx-a11y/alt-text */}
+                    <Image size={16} className="mr-2" />
+                    DAG Lineage (PNG)
+                  </button>
+                  <button
+                    onClick={() => { handleExport('python'); setIsExportDropdownOpen(false); }}
+                    className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
+                    role="menuitem"
+                  >
+                    <FileCode size={16} className="mr-2" />
+                    Python Skeleton (.py)
+                  </button>
+                  <button
+                    onClick={() => { handleExport('dagml'); setIsExportDropdownOpen(false); }}
+                    className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'text-gray-100 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
+                    role="menuitem"
+                  >
+                    <FileJson size={16} className="mr-2" />
+                    DAGML File (.dagml)
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </nav>

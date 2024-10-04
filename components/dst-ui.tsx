@@ -287,7 +287,7 @@ dependencies:
           target: dep[1],
           type: 'smoothstep',
           animated: true,
-          style: { stroke: isDarkMode ? '#b1b1b7' : '#666666' },
+          style: { stroke: isDarkMode ? '#101077' : '#aaaab5' , strokeWidth: 4},
         }));
       }
 
@@ -739,7 +739,7 @@ update_metadata >> end`
           target: target,
           type: 'smoothstep',
           animated: true,
-          style: { stroke: '#b1b1b7' },
+          style: { stroke: isDarkMode ? '#101077' : '#aaaab5' , strokeWidth: 4},
         })
       }
     }

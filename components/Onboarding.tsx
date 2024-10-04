@@ -69,7 +69,7 @@ const Tooltip: React.FC<TooltipProps> = ({ content, targets, position }) => {
           ref={el => {
             if (el) highlightRefs.current[index] = el;
           }}
-          className="fixed z-40 border-4 border-blue-500 rounded-lg animate-pulse"
+          className="fixed z-40 border-4 border-blue-500 rounded-lg"
           style={{
             boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
             transition: 'all 0.3s ease-in-out',

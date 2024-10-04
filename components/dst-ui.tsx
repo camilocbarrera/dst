@@ -929,7 +929,7 @@ update_metadata >> end`
                     GitHub Repository
                   </a>
                   <a
-                    href="https://github.com/camilocbarrera/dst"
+                    href="https://github.com/camilocbarrera/dst/issues"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`text-blue-500 hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useContext, createContext } from 'react'
 import Editor, { Monaco, OnChange } from "@monaco-editor/react";
 // import type * as monaco from 'monaco-editor';
 import React from 'react'
@@ -29,6 +29,7 @@ import { editor } from 'monaco-editor';  // Add this import if not already prese
 import { saveAs } from 'file-saver';
 import html2canvas from 'html2canvas';
 import { Onboarding } from './Onboarding';
+import { useMediaQuery } from '../hooks/useMediaQuery'; // Add this import
 
 const initialNodes: Node[] = []
 const initialEdges: Edge[] = []
@@ -43,6 +44,7 @@ interface CustomNodeData {
 const CustomNode = ({ data }: { data: CustomNodeData }) => {
   const nodeRef = useRef<HTMLDivElement>(null);
   const [nodeWidth, setNodeWidth] = useState(160); // Default width
+  const { isDarkMode } = useContext(ThemeContext); // Add this line to get the dark mode state
 
   useEffect(() => {
     if (nodeRef.current) {
@@ -56,17 +58,29 @@ const CustomNode = ({ data }: { data: CustomNodeData }) => {
   return (
     <div 
       ref={nodeRef}
-      className="bg-white rounded-md shadow-md overflow-hidden border-2 border-blue-500" 
+      className={`rounded-md shadow-md overflow-hidden border-2 ${
+        isDarkMode 
+          ? 'bg-blue-gray-700 border-blue-gray-500' 
+          : 'bg-white border-blue-500'
+      }`}
       style={{ width: nodeWidth }}
     >
-      <div className="px-3 py-2 bg-blue-50">
-        <div className="label font-semibold text-s text-blue-900 whitespace-nowrap" title={data.label}>{data.label}</div>
+      <div className={`px-3 py-2 ${isDarkMode ? 'bg-blue-gray-600' : 'bg-blue-50'}`}>
+        <div className={`label font-semibold text-s whitespace-nowrap ${
+          isDarkMode ? 'text-blue-gray-100' : 'text-blue-900'
+        }`} title={data.label}>{data.label}</div>
       </div>
       <div className="px-3 py-2">
-        <div className="operator text-sm text-gray-800 whitespace-nowrap" title={data.operator}>{data.operator}</div>
+        <div className={`operator text-sm whitespace-nowrap ${
+          isDarkMode ? 'text-blue-gray-200' : 'text-gray-800'
+        }`} title={data.operator}>{data.operator}</div>
       </div>
-      <Handle type="target" position={Position.Left} className="w-2 h-2 !bg-blue-500" />
-      <Handle type="source" position={Position.Right} className="w-2 h-2 !bg-blue-500" />
+      <Handle type="target" position={Position.Left} className={`w-2 h-2 ${
+        isDarkMode ? '!bg-blue-gray-400' : '!bg-blue-500'
+      }`} />
+      <Handle type="source" position={Position.Right} className={`w-2 h-2 ${
+        isDarkMode ? '!bg-blue-gray-400' : '!bg-blue-500'
+      }`} />
     </div>
   );
 };
@@ -184,6 +198,16 @@ const DotGrid = ({ isDarkMode }: { isDarkMode: boolean }) => {
     </svg>
   );
 };
+
+interface ThemeContextType {
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
+}
+
+const ThemeContext = createContext<ThemeContextType>({
+  isDarkMode: false,
+  toggleDarkMode: () => {},
+});
 
 function DAGVisualizerContent() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
@@ -913,8 +937,10 @@ update_metadata >> end`
     custom: CustomEdge,
   };
 
+  const isMobile = useMediaQuery('(max-width: 768px)');
+
   return (
-    <>
+    <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
       <Head>
         <title>DAG Sketch Tool - Visualize and Design Airflow DAGs</title>
         <meta name="description" content="An open-source tool for visualizing and designing Directed Acyclic Graphs (DAGs) using YAML-based DAGML or Airflow-style bitshift syntax. You can also generate the code for your DAGs." />
@@ -925,9 +951,17 @@ update_metadata >> end`
       </Head>
       <div className={`flex flex-col h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
         {/* Navbar */}
-        <nav className={`flex items-center p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-md relative z-10`}>
-          <div className="flex items-center space-x-4 flex-grow">
-            <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>DAG Sketch Tool 🎨</h1>
+        <nav className={`flex flex-wrap items-center p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-md relative z-10`}>
+          <div className="flex items-center space-x-4 w-full mb-4 md:mb-0 md:w-auto">
+            <h1 className={`text-xl md:text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>DAG Sketch Tool 🎨</h1>
+            <button
+              onClick={toggleDarkMode}
+              className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-200 text-gray-800'} mx-3 md:mx-6`}
+            >
+              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center space-x-4 space-y-2 md:space-y-0 w-full md:w-auto md:ml-4">
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -1027,12 +1061,6 @@ update_metadata >> end`
                 </div>
               )}
             </div>
-            <button
-              onClick={toggleDarkMode}
-              className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-200 text-gray-800'}`}
-            >
-              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
             <div className="flex items-center space-x-2">
               <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>DAGML</span>
               <button
@@ -1097,9 +1125,9 @@ update_metadata >> end`
         </nav>
 
         {/* Main content */}
-        <div className="flex flex-grow relative" ref={containerRef}>
-          <div id="editor" style={{ width: `${editorWidth}%` }} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} overflow-hidden flex flex-col`}>
-            <div className={`flex-grow border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg m-4 overflow-hidden shadow-lg`}>
+        <div className={`flex flex-grow relative ${isMobile ? 'flex-col' : ''}`} ref={containerRef}>
+          <div id="editor" style={{ width: isMobile ? '100%' : `${editorWidth}%`, height: isMobile ? '50%' : 'auto' }} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} overflow-hidden flex flex-col`}>
+            <div className={`flex-grow border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg m-2 md:m-4 overflow-hidden shadow-lg`}>
               <Editor
                 height="100%"
                 language={mode === 'dagml' ? "yaml" : "bitshift"}
@@ -1109,6 +1137,7 @@ update_metadata >> end`
                   ...editorOptions,
                   automaticLayout: true,
                   tabSize: 2,
+                  fontSize: isMobile ? 12 : 14,
                 }}
                 onChange={handleEditorChange}
                 beforeMount={handleEditorWillMount}
@@ -1117,27 +1146,29 @@ update_metadata >> end`
               />
             </div>
             {/* REPL output section */}
-            <div id="repl-output" className={`h-48 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg mx-4 mb-4 overflow-hidden shadow-lg`}>
+            <div id="repl-output" className={`h-32 md:h-48 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg mx-2 md:mx-4 mb-2 md:mb-4 overflow-hidden shadow-lg`}>
               <div className={`p-2 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'}`}>
                 REPL Output
               </div>
-              <pre className={`p-4 overflow-auto h-[calc(100%-2rem)] ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
+              <pre className={`p-2 md:p-4 overflow-auto h-[calc(100%-2rem)] ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} text-xs md:text-sm`}>
                 {replOutput}
               </pre>
             </div>
           </div>
-          <div
-            className={`w-1 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} cursor-col-resize hover:bg-blue-600 transition-colors`}
-            onMouseDown={handleMouseDown}
-          ></div>
-          <div style={{ width: `${100 - editorWidth}%` }} className="p-4 flex flex-col">
-            <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+          {!isMobile && (
+            <div
+              className={`w-1 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} cursor-col-resize hover:bg-blue-600 transition-colors`}
+              onMouseDown={handleMouseDown}
+            ></div>
+          )}
+          <div style={{ width: isMobile ? '100%' : `${100 - editorWidth}%`, height: isMobile ? '50%' : 'auto' }} className="p-2 md:p-4 flex flex-col">
+            <div className="flex border-b border-gray-200 dark:border-gray-700 mb-2 md:mb-4">
               <button
                 id="graph"
-                className={`py-2 px-4 flex items-center ${rightSideTab === 'graph' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                className={`py-1 md:py-2 px-2 md:px-4 flex items-center text-sm md:text-base ${rightSideTab === 'graph' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
                 onClick={() => setRightSideTab('graph')}
               >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="4" cy="4" r="2" />
                   <circle cx="12" cy="12" r="2" />
                   <circle cx="20" cy="4" r="2" />
@@ -1151,10 +1182,10 @@ update_metadata >> end`
               {mode === 'dagml' && (
                 <button
                   id="code-tab"
-                  className={`py-2 px-4 flex items-center ${rightSideTab === 'python' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                  className={`py-1 md:py-2 px-2 md:px-4 flex items-center text-sm md:text-base ${rightSideTab === 'python' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
                   onClick={() => setRightSideTab('python')}
                 >
-                  <FileCode size={20} className="mr-2" />
+                  <FileCode size={isMobile ? 16 : 20} className="mr-1 md:mr-2" />
                   Code
                 </button>
               )}
@@ -1192,6 +1223,7 @@ update_metadata >> end`
                     automaticLayout: true,
                     tabSize: 4,
                     readOnly: true,
+                    fontSize: isMobile ? 12 : 14,
                   }}
                   className="rounded-lg"
                 />
@@ -1201,7 +1233,7 @@ update_metadata >> end`
         </div>
       </div>
       <Onboarding />
-    </>
+    </ThemeContext.Provider>
   )
 }
 

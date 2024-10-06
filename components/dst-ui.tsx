@@ -943,7 +943,7 @@ update_metadata >> end`
     <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
       <Head>
         <title>DAG Sketch Tool - Visualize and Design Airflow DAGs</title>
-        <meta name="description" content="An open-source tool for visualizing and designing Directed Acyclic Graphs (DAGs) using YAML-based DAGML or Airflow-style bitshift syntax. You can also generate the code for your DAGs." />
+        <meta name="description" content="An open-source tool for visualizing and designing Directed Acyclic Graphs (DAGs) using YAML-based DAGML or Apache Airflow-style bitshift syntax. You can also generate the code for your DAGs." />
         <meta name="keywords" content="DAG, Directed Acyclic Graph, Apache Airflow, DAGML, Data Visualization, Workflow Management, Data Pipeline Design, Workflow Automation, Data Engineering, ETL Processes, Task Scheduling, Data Pipeline Visualization, Cloud Computing, Open Source Tools" />
         <meta name="author" content="Cristian Correa" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -1124,6 +1124,14 @@ update_metadata >> end`
           </div>
         </nav>
 
+        {/* Mobile warning message */}
+        {isMobile && (
+          <div className={`p-4 ${isDarkMode ? 'bg-yellow-800 text-yellow-100' : 'bg-yellow-100 text-yellow-800'} text-sm`}>
+            <p className="font-semibold mb-1">⚠️ Limited Mobile Experience</p>
+            <p>For the best experience with DAG Sketch Tool, please use a desktop browser. Some features may be limited or difficult to use on mobile devices.</p>
+          </div>
+        )}
+
         {/* Main content */}
         <div className={`flex flex-grow relative ${isMobile ? 'flex-col' : ''}`} ref={containerRef}>
           <div id="editor" style={{ width: isMobile ? '100%' : `${editorWidth}%`, height: isMobile ? '50%' : 'auto' }} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} overflow-hidden flex flex-col`}>
@@ -1232,7 +1240,7 @@ update_metadata >> end`
           </div>
         </div>
       </div>
-      <Onboarding />
+      {!isMobile && <Onboarding />}
     </ThemeContext.Provider>
   )
 }

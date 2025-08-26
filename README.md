@@ -1,36 +1,23 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# dag sketch tool 🎨
 
-## Getting Started
+dag sketch tool (dst) helps you create and design Apache Airflow DAGs visually and programmatically. You can use an easy-to-understand markup language and a handy command-line tool called dst for generating DAGs skeletons.
 
-First, run the development server:
+## Try it out
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+You can test the interactive UI of DAG Sketch Tool at [https://www.dag-sketch.com/](https://www.dag-sketch.com/). This web-based interface allows you to experiment with the visual DAG designer and get a feel for how the tool works.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Introduction
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+dag sketch tool (dst) simplifies the creation and management of Apache Airflow DAGs by allowing you to:
 
-## Learn More
+- Define DAGs using a human-readable markup language called DAGML (DAG Markup Language) in a YAML-based format.
+- Visually design and sketch DAGs using an intuitive UI.
+- Generate Airflow DAGs programmatically from DAGML definitions with the dst CLI tool.
 
-To learn more about Next.js, take a look at the following resources:
+## Features
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Simple DAG Definition: Use DAGML to define DAGs in a concise YAML format.
+- Visual DAG Designer: Sketch and visualize your DAGs with an interactive UI.
+- Powerful CLI: Manage, compile, and validate DAGs using the dst command-line tool.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

@@ -2,4 +2,149 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Add any custom styles below this line */
+@layer base {
+  :root {
+    /* Explicit color scheme declaration for better monitor compatibility */
+    color-scheme: light;
+    /* Light mode (fallback) */
+    --background: 250 250 250;
+    --foreground: 10 10 10;
+    --card: 255 255 255;
+    --card-foreground: 10 10 10;
+    --popover: 255 255 255;
+    --popover-foreground: 10 10 10;
+    --primary: 10 10 10;
+    --primary-foreground: 255 255 255;
+    --secondary: 245 245 245;
+    --secondary-foreground: 10 10 10;
+    --muted: 245 245 245;
+    --muted-foreground: 115 115 115;
+    --accent: 245 245 245;
+    --accent-foreground: 10 10 10;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    --border: 229 229 229;
+    --input: 229 229 229;
+    --ring: 10 10 10;
+    --radius: 6px;
+  }
+
+  .dark {
+    /* Explicit dark color scheme for better monitor compatibility */
+    color-scheme: dark;
+    /* Refined dark theme with better contrast */
+    --background: 8 8 8;
+    --foreground: 250 250 250;
+    --card: 15 15 15;
+    --card-foreground: 250 250 250;
+    --popover: 18 18 18;
+    --popover-foreground: 250 250 250;
+    --primary: 99 102 241;
+    --primary-foreground: 255 255 255;
+    --secondary: 32 32 32;
+    --secondary-foreground: 212 212 212;
+    --muted: 28 28 28;
+    --muted-foreground: 156 163 175;
+    --accent: 40 40 40;
+    --accent-foreground: 250 250 250;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    --border: 45 45 45;
+    --input: 32 32 32;
+    --ring: 99 102 241;
+  }
+
+  /* Geist-specific variables */
+  :root {
+    --geist-gray: 82 82 82;
+    --geist-gray-light: 115 115 115;
+    --geist-gray-dark: 64 64 64;
+    --geist-success: 0 112 60;
+    --geist-error: 229 72 77;
+    --geist-warning: 249 115 22;
+  }
+
+  .dark {
+    --geist-gray: 163 163 163;
+    --geist-gray-light: 212 212 212;
+    --geist-gray-dark: 115 115 115;
+  }
+}
+
+@layer base {
+  
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Ultra compact scrollbars */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 9999px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground));
+  }
+  
+  /* Remove scrollbar gutter */
+  html {
+    scrollbar-gutter: stable;
+  }
+  
+  /* Enhanced focus styles */
+  .focus-visible\:ring-primary:focus-visible {
+    --tw-ring-color: hsl(var(--primary));
+  }
+  
+  /* Smooth transitions for interactive elements */
+  button, input, select, textarea {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+  
+  /* Enhanced hover states */
+  .hover\:shadow-md:hover {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+  
+  /* Improved text rendering */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Force white edges in ReactFlow */
+  .react-flow__edge-path {
+    stroke: rgba(255, 255, 255, 0.6) !important;
+  }
+  
+  .react-flow__edge-path:hover {
+    stroke: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  /* Ensure drawer always appears above ReactFlow */
+  .react-flow {
+    z-index: 1 !important;
+  }
+  
+  .react-flow__renderer {
+    z-index: 1 !important;
+  }
+  
+  .react-flow__container {
+    z-index: 1 !important;
+  }
+}

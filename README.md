@@ -1,6 +1,6 @@
 # dag sketch tool 🎨
 
-dag sketch tool (dst) helps you create and design Apache Airflow DAGs visually and programmatically. You can use an easy-to-understand markup language and a handy command-line tool called dst for generating DAGs skeletons.
+dag sketch tool (dst) helps you create and design Apache Airflow DAGs visually in a declarative way. You can use an easy-to-understand markup language and a handy command-line tool called dst for generating DAGs skeletons.
 
 ## Try it out
 

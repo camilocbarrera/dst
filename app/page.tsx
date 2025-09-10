@@ -1,4 +1,4 @@
-import { YamlDagVisualizer } from '@/components/dst-ui'
+import { YamlDagVisualizer } from '@/components/DstUI'
 
 export default function Page() {
   return <YamlDagVisualizer />

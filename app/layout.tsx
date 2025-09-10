@@ -2,19 +2,22 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react"
-
-// Remove this redundant import
-// import { Metadata } from 'next'
+import { ThemeProvider } from "@/context/ThemeContext"
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
   weight: "100 900",
+  display: 'swap',
+  preload: true,
 });
+
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
   weight: "100 900",
+  display: 'swap',
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -39,12 +42,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        <meta name="color-scheme" content="dark light" />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+        suppressHydrationWarning
       >
-        {children}
-        <Analytics />
+        <ThemeProvider defaultTheme="dark">
+          {children}
+          <Analytics />
+        </ThemeProvider>
       </body>
     </html>
   );

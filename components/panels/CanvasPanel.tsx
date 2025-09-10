@@ -16,7 +16,7 @@ import { CustomEdge } from '../graph/CustomEdge'
 import { DotGrid } from '../graph/DotGrid'
 import { EDITOR_OPTIONS } from '../../lib/constants'
 
-interface RightPanelProps {
+interface CanvasPanelProps {
   isDarkMode: boolean;
   isMobile: boolean;
   rightSideTab: 'graph' | 'python';
@@ -37,7 +37,7 @@ const edgeTypes = {
   custom: CustomEdge,
 }
 
-export function RightPanel({
+export function CanvasPanel({
   isDarkMode,
   isMobile,
   rightSideTab,
@@ -48,15 +48,19 @@ export function RightPanel({
   onNodesChange,
   onEdgesChange,
   generatedPythonCode
-}: RightPanelProps) {
+}: CanvasPanelProps) {
   return (
     <div className="flex flex-col h-full">
-      <div className="flex border-b border-gray-200 dark:border-gray-700 px-2 md:px-4 py-2 md:py-4">
+      <div className="flex border-b border-border bg-card/50">
         <button
-          className={`py-1 md:py-2 px-2 md:px-4 flex items-center text-sm md:text-base ${rightSideTab === 'graph' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+          className={`py-1.5 px-2.5 flex items-center text-xs font-medium transition-colors ${
+            rightSideTab === 'graph' 
+              ? 'bg-primary/10 text-primary border-b-2 border-primary' 
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+          }`}
           onClick={() => setRightSideTab('graph')}
         >
-          <svg className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <circle cx="4" cy="4" r="2" />
             <circle cx="12" cy="12" r="2" />
             <circle cx="20" cy="4" r="2" />
@@ -69,17 +73,21 @@ export function RightPanel({
         </button>
         {mode === 'dagml' && (
           <button
-            className={`py-1 md:py-2 px-2 md:px-4 flex items-center text-sm md:text-base ${rightSideTab === 'python' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+            className={`py-1.5 px-2.5 flex items-center text-xs font-medium transition-colors ${
+              rightSideTab === 'python' 
+                ? 'bg-primary/10 text-primary border-b-2 border-primary' 
+                : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+            }`}
             onClick={() => setRightSideTab('python')}
           >
-            <FileCode size={isMobile ? 16 : 20} className="mr-1 md:mr-2" />
+            <FileCode size={12} className="mr-1.5" />
             Code
           </button>
         )}
       </div>
       
       {rightSideTab === 'graph' || mode !== 'dagml' ? (
-        <div className={`flex-grow ${isDarkMode ? 'bg-gray-900' : 'bg-gray-200'} overflow-hidden`}>
+        <div className="flex-grow bg-muted/20 overflow-hidden">
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -90,17 +98,17 @@ export function RightPanel({
             edgeTypes={edgeTypes}
             fitView
             fitViewOptions={{ padding: 0.1 }}
-            className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} w-full h-full`}
+            className="w-full h-full bg-background"
             nodesConnectable={false}
             edgesUpdatable={true}
             nodesDraggable={true}
           >
-            <Controls />
+            <Controls className="!bg-card !border-border !shadow-lg" />
             <DotGrid isDarkMode={isDarkMode} />
           </ReactFlow>
         </div>
       ) : (
-        <div className={`flex-grow border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} mx-2 md:mx-4 mb-2 md:mb-4 rounded-lg overflow-hidden shadow-lg`}>
+        <div className="flex-grow border border-border m-1.5 rounded-md overflow-hidden bg-card">
           <Editor
             height="100%"
             language="python"
@@ -111,9 +119,12 @@ export function RightPanel({
               automaticLayout: true,
               tabSize: 4,
               readOnly: true,
-              fontSize: isMobile ? 12 : 14,
+              fontSize: isMobile ? 11 : 12,
+              lineHeight: 1.3,
+              padding: { top: 6, bottom: 6 },
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
             }}
-            className="rounded-lg"
           />
         </div>
       )}

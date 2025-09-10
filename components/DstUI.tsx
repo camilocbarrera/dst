@@ -20,7 +20,7 @@ import 'reactflow/dist/style.css'
 import { Onboarding } from './Onboarding';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useResizablePanel } from '../hooks/useResizablePanel';
-import { ThemeContext } from '../context/ThemeContext';
+import { useTheme } from '../context/ThemeContext';
 import { generatePythonDAG } from '../lib/generatePython';
 import { exportDagLineage } from '../lib/export';
 import { getLayoutedElements } from '../lib/layout';
@@ -29,7 +29,7 @@ import { parseYAMLInput, parseBitshiftInput } from '../lib/parsers';
 import type { ParsedYAML } from '../types/dag';
 import { Navbar } from './layout/Navbar';
 import { EditorPanel } from './panels/EditorPanel';
-import { RightPanel } from './panels/RightPanel';
+import { CanvasPanel } from './panels/CanvasPanel';
 
 const initialNodes: Node[] = []
 const initialEdges: Edge[] = []
@@ -39,18 +39,14 @@ function DAGVisualizerContent() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
   const [input, setInput] = useState(EXAMPLES.dagml.simple)
   const [replOutput, setReplOutput] = useState('')
-  const [isDarkMode, setIsDarkMode] = useState(false)
   const [mode, setMode] = useState<'dagml' | 'bitshift'>('dagml')
   const [generatedPythonCode, setGeneratedPythonCode] = useState('')
   const [rightSideTab, setRightSideTab] = useState<'graph' | 'python'>('graph')
   
   const { fitView } = useReactFlow()
+  const { isDarkMode, toggleTheme } = useTheme()
   const isMobile = useMediaQuery('(max-width: 768px)')
-  const { panelWidth: editorWidth, containerRef, handleMouseDown } = useResizablePanel(35)
-
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode)
-  }
+  const { panelWidth: editorWidth, isDragging, containerRef, handleMouseDown } = useResizablePanel(35)
 
   const parseInput = useCallback((input: string) => {
     try {
@@ -115,37 +111,48 @@ function DAGVisualizerContent() {
   const reactFlowInstance = useReactFlow();
 
   const handleExport = (type: 'lineage' | 'python' | 'dagml') => {
-    if (mode !== 'dagml') {
-      alert('Export is only available in DAGML mode');
-      return;
-    }
-
     try {
-      const dagml = yaml.load(input) as ParsedYAML;
-      const dagId = dagml.dag?.dag_id || 'generated_dag';
+      let dagId = 'generated_dag';
+      
+      if (mode === 'dagml') {
+        const dagml = yaml.load(input) as ParsedYAML;
+        dagId = dagml.dag?.dag_id || 'generated_dag';
+      } else {
+        // For bitshift mode, use a simple ID based on content hash or timestamp
+        dagId = `bitshift_dag_${Date.now()}`;
+      }
       
       switch (type) {
         case 'lineage':
           exportDagLineage(reactFlowInstance, dagId);
           break;
         case 'python':
-          const pythonCode = generatePythonDAG(dagml);
-          const pythonBlob = new Blob([pythonCode], { type: 'text/plain;charset=utf-8' });
-          saveAs(pythonBlob, `${dagId}.py`);
+          if (mode === 'dagml') {
+            const dagml = yaml.load(input) as ParsedYAML;
+            const pythonCode = generatePythonDAG(dagml);
+            const pythonBlob = new Blob([pythonCode], { type: 'text/plain;charset=utf-8' });
+            saveAs(pythonBlob, `${dagId}.py`);
+          }
           break;
         case 'dagml':
-          const dagmlBlob = new Blob([input], { type: 'text/plain;charset=utf-8' });
-          saveAs(dagmlBlob, `${dagId}.dagml`);
+          if (mode === 'dagml') {
+            const dagmlBlob = new Blob([input], { type: 'text/plain;charset=utf-8' });
+            saveAs(dagmlBlob, `${dagId}.dagml`);
+          } else {
+            // Export bitshift format
+            const bitshiftBlob = new Blob([input], { type: 'text/plain;charset=utf-8' });
+            saveAs(bitshiftBlob, `${dagId}.txt`);
+          }
           break;
       }
     } catch (error) {
       console.error('Error exporting DAG:', error);
-      alert('Error exporting DAG. Please check your DAGML syntax.');
+      alert(`Error exporting DAG. Please check your ${mode === 'dagml' ? 'DAGML' : 'Bitshift'} syntax.`);
     }
   };
 
   return (
-    <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
+    <>
       <Head>
         <title>DAG Sketch Tool - Visualize and Design Airflow DAGs</title>
         <meta name="description" content="An open-source tool for visualizing and designing Directed Acyclic Graphs (DAGs) using YAML-based DAGML or Apache Airflow-style bitshift syntax. You can also generate the code for your DAGs." />
@@ -155,10 +162,10 @@ function DAGVisualizerContent() {
         <link rel="canonical" href="https://www.dag-sketch.com" />
       </Head>
       
-      <div className={`flex flex-col h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
+      <div className="flex flex-col h-screen bg-background">
         <Navbar
           isDarkMode={isDarkMode}
-          onToggleDarkMode={toggleDarkMode}
+          onToggleDarkMode={toggleTheme}
           mode={mode}
           onToggleMode={toggleMode}
           onLoadExample={loadExample}
@@ -166,16 +173,16 @@ function DAGVisualizerContent() {
         />
 
         {isMobile && (
-          <div className={`p-4 ${isDarkMode ? 'bg-yellow-800 text-yellow-100' : 'bg-yellow-100 text-yellow-800'} text-sm`}>
-            <p className="font-semibold mb-1">⚠️ Limited Mobile Experience</p>
-            <p>For the best experience with DAG Sketch Tool, please use a desktop browser. Some features may be limited or difficult to use on mobile devices.</p>
+          <div className="p-3 bg-destructive/10 text-destructive text-sm border-b border-border">
+            <p className="font-medium mb-1">⚠️ Limited Mobile Experience</p>
+            <p className="text-xs opacity-90">For the best experience with DAG Sketch Tool, please use a desktop browser. Some features may be limited or difficult to use on mobile devices.</p>
           </div>
         )}
 
         <div className={`flex flex-grow relative ${isMobile ? 'flex-col' : ''}`} ref={containerRef}>
           <div 
             style={{ width: isMobile ? '100%' : `${editorWidth}%`, height: isMobile ? '50%' : 'auto' }} 
-            className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} overflow-hidden flex flex-col`}
+            className="bg-background border-r border-border overflow-hidden flex flex-col"
           >
             <EditorPanel
               isDarkMode={isDarkMode}
@@ -190,16 +197,22 @@ function DAGVisualizerContent() {
           
           {!isMobile && (
             <div
-              className={`w-1 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} cursor-col-resize hover:bg-blue-600 transition-colors`}
+              className={`w-1 bg-border cursor-col-resize hover:bg-primary/30 transition-all duration-200 relative group ${
+                isDragging ? 'bg-primary/50 w-1.5' : ''
+              }`}
               onMouseDown={handleMouseDown}
-            />
+            >
+              <div className="absolute inset-y-0 -left-1 -right-1 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="w-1 h-8 bg-primary/40 rounded-full" />
+              </div>
+            </div>
           )}
           
           <div 
             style={{ width: isMobile ? '100%' : `${100 - editorWidth}%`, height: isMobile ? '50%' : '100%' }}
-            className="flex flex-col"
+            className="flex flex-col bg-background"
           >
-            <RightPanel
+            <CanvasPanel
               isDarkMode={isDarkMode}
               isMobile={isMobile}
               rightSideTab={rightSideTab}
@@ -216,7 +229,7 @@ function DAGVisualizerContent() {
       </div>
       
       {!isMobile && <Onboarding />}
-    </ThemeContext.Provider>
+    </>
   )
 }
 

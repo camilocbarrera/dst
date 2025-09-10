@@ -37,8 +37,8 @@ export function EditorPanel({
   };
 
   return (
-    <>
-      <div className={`flex-grow border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg m-2 md:m-4 overflow-hidden shadow-lg`}>
+    <div className="flex flex-col h-full gap-1.5 p-1.5">
+      <div className="flex-grow border border-border rounded-md overflow-hidden bg-card">
         <Editor
           height="100%"
           language={mode === 'dagml' ? "yaml" : "bitshift"}
@@ -48,24 +48,30 @@ export function EditorPanel({
             ...EDITOR_OPTIONS,
             automaticLayout: true,
             tabSize: 2,
-            fontSize: isMobile ? 12 : 14,
+            fontSize: isMobile ? 11 : 12,
+            lineHeight: 1.3,
+            padding: { top: 6, bottom: 6 },
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
           }}
           onChange={onInputChange}
           beforeMount={handleEditorWillMount}
           onMount={handleEditorDidMount}
-          className="rounded-lg"
         />
       </div>
       
-      {/* REPL output section */}
-      <div className={`h-32 md:h-48 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg mx-2 md:mx-4 mb-2 md:mb-4 overflow-hidden shadow-lg`}>
-        <div className={`p-2 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'}`}>
-          REPL Output
+      <div className="h-28 md:h-32 border border-border rounded-md overflow-hidden bg-card flex flex-col">
+        <div className="px-2.5 py-1.5 bg-muted/30 border-b border-border">
+          <span className="text-xs font-medium text-muted-foreground font-mono">
+            Output
+          </span>
         </div>
-        <pre className={`p-2 md:p-4 overflow-auto h-[calc(100%-2rem)] ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} text-xs md:text-sm`}>
-          {replOutput}
-        </pre>
+        <div className="flex-1 overflow-auto">
+          <pre className="p-2.5 text-xs font-mono leading-tight text-foreground whitespace-pre-wrap">
+            {replOutput || 'No output yet...'}
+          </pre>
+        </div>
       </div>
-    </>
+    </div>
   );
 }

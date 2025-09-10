@@ -31,7 +31,7 @@ export function parseYAMLInput(
       target: dep[1],
       type: 'smoothstep',
       animated: true,
-      style: { stroke: isDarkMode ? '#101077' : '#aaaab5', strokeWidth: 4 },
+      style: { stroke: 'rgba(255, 255, 255, 0.6)', strokeWidth: 2 },
     }));
   }
 
@@ -81,7 +81,7 @@ export function parseBitshiftInput(
         target: target,
         type: 'smoothstep',
         animated: true,
-        style: { stroke: isDarkMode ? '#101077' : '#aaaab5', strokeWidth: 4 },
+        style: { stroke: 'rgba(255, 255, 255, 0.6)', strokeWidth: 2 },
       })
     }
   }

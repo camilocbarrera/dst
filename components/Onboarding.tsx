@@ -69,14 +69,14 @@ const Tooltip: React.FC<TooltipProps> = ({ content, targets, position }) => {
           ref={el => {
             if (el) highlightRefs.current[index] = el;
           }}
-          className="fixed z-40 border-4 border-blue-500 rounded-lg"
+          className="fixed z-20 border-4 border-blue-500 rounded-lg"
           style={{
             boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
             transition: 'all 0.3s ease-in-out',
           }}
         />
       ))}
-      <div ref={tooltipRef} className="fixed z-50 p-4 bg-white text-black rounded shadow-lg max-w-xs">
+      <div ref={tooltipRef} className="fixed z-30 p-4 bg-white text-black rounded shadow-lg max-w-xs">
         {content}
       </div>
     </>
@@ -145,7 +145,7 @@ export function Onboarding() {
   const step = onboardingSteps[currentStep];
 
   return (
-    <div className="fixed inset-0 z-30 pointer-events-none">
+    <div className="fixed inset-0 z-20 pointer-events-none">
       <Tooltip
         content={
           <div className="pointer-events-auto">

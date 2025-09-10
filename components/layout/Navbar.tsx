@@ -28,48 +28,78 @@ export function Navbar({
   const [isInfoOpen, setIsInfoOpen] = useState(false)
   const [isExportOpen, setIsExportOpen] = useState(false)
 
+  const handleExamplesToggle = (open: boolean) => {
+    setIsExamplesOpen(open)
+    if (open) {
+      setIsExportOpen(false)
+    }
+  }
+
+  const handleInfoToggle = (open: boolean) => {
+    setIsInfoOpen(open)
+    if (open) {
+      setIsExamplesOpen(false)
+      setIsExportOpen(false)
+    }
+  }
+
+  const handleExportToggle = (open: boolean) => {
+    setIsExportOpen(open)
+    if (open) {
+      setIsExamplesOpen(false)
+    }
+  }
+
   return (
-    <nav className={`flex flex-wrap items-center p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-md relative z-10`}>
-      <div className="flex items-center space-x-4 w-full mb-4 md:mb-0 md:w-auto">
-        <h1 className={`text-xl md:text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-          DAG Sketch Tool 🎨
+    <nav className="flex items-center justify-between px-3 py-2 bg-card/95 backdrop-blur-sm border-b border-border relative z-10">
+      <div className="flex items-center gap-3">
+        <h1 className="text-base font-semibold text-foreground font-mono tracking-tight">
+          DAG Sketch
         </h1>
-        <button
-          onClick={onToggleDarkMode}
-          className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-200 text-gray-800'} mx-3 md:mx-6`}
-        >
-          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
+        <div className="hidden sm:flex items-center">
+          <button
+            onClick={onToggleDarkMode}
+            className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+            aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
+          </button>
+        </div>
       </div>
       
-      <div className="flex flex-wrap items-center space-x-4 space-y-2 md:space-y-0 w-full md:w-auto md:ml-4">
+      <div className="flex items-center gap-1.5">
         <ExamplesDropdown
-          isDarkMode={isDarkMode}
           isOpen={isExamplesOpen}
-          setIsOpen={setIsExamplesOpen}
+          setIsOpen={handleExamplesToggle}
           onLoadExample={onLoadExample}
         />
         
         <InfoPanel
-          isDarkMode={isDarkMode}
           isOpen={isInfoOpen}
-          setIsOpen={setIsInfoOpen}
+          setIsOpen={handleInfoToggle}
         />
         
         <ModeToggle
-          isDarkMode={isDarkMode}
           mode={mode}
           onToggleMode={onToggleMode}
         />
         
-        {mode === 'dagml' && (
-          <ExportDropdown
-            isDarkMode={isDarkMode}
-            isOpen={isExportOpen}
-            setIsOpen={setIsExportOpen}
-            onExport={onExport}
-          />
-        )}
+        <ExportDropdown
+          isOpen={isExportOpen}
+          setIsOpen={handleExportToggle}
+          onExport={onExport}
+          mode={mode}
+        />
+        
+        <div className="sm:hidden">
+          <button
+            onClick={onToggleDarkMode}
+            className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+            aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
+          </button>
+        </div>
       </div>
     </nav>
   );

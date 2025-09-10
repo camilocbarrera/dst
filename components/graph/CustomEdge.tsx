@@ -1,8 +1,7 @@
 "use client"
 
-import React, { useContext } from 'react'
+import React from 'react'
 import { EdgeProps, getBezierPath } from 'reactflow'
-import { ThemeContext } from '../../context/ThemeContext'
 
 export function CustomEdge({
   id,
@@ -15,7 +14,6 @@ export function CustomEdge({
   style = {},
   markerEnd,
 }: EdgeProps) {
-  const { isDarkMode } = useContext(ThemeContext);
   const [edgePath] = getBezierPath({
     sourceX,
     sourceY,
@@ -25,18 +23,22 @@ export function CustomEdge({
     targetPosition,
   });
 
-  const lightModeColor = '#3b82f6';
-  const darkModeColor = '#60a5fa';
-
   return (
     <path
       id={id}
       style={{
         ...style,
-        strokeWidth: 10,
-        stroke: isDarkMode ? darkModeColor : lightModeColor,
+        strokeWidth: 2,
+        stroke: 'rgba(255, 255, 255, 0.6) !important',
+        strokeDasharray: '0',
       }}
-      className="react-flow__edge-path"
+      className="transition-all duration-200"
+      onMouseEnter={(e) => {
+        e.currentTarget.style.setProperty('stroke', 'rgba(255, 255, 255, 0.9)', 'important');
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.setProperty('stroke', 'rgba(255, 255, 255, 0.6)', 'important');
+      }}
       d={edgePath}
       markerEnd={markerEnd}
     />

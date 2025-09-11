@@ -73,9 +73,10 @@ export function CanvasPanel({
         </button>
         {mode === 'dagml' && (
           <button
+            id="code-tab"
             className={`py-2 px-4 flex items-center text-xs font-medium rounded-md transition-all duration-200 relative overflow-hidden group ml-1 ${
-              rightSideTab === 'python' 
-                ? 'bg-primary/15 text-primary shadow-sm border border-primary/20 before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/5 before:to-transparent' 
+              rightSideTab === 'python'
+                ? 'bg-primary/15 text-primary shadow-sm border border-primary/20 before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/5 before:to-transparent'
                 : 'text-muted-foreground hover:text-foreground hover:bg-accent/60 hover:shadow-sm'
             }`}
             onClick={() => setRightSideTab('python')}
@@ -87,7 +88,7 @@ export function CanvasPanel({
       </div>
       
       {rightSideTab === 'graph' || mode !== 'dagml' ? (
-        <div className="flex-grow bg-muted/20 overflow-hidden">
+        <div id="graph" className="flex-grow bg-muted/20 overflow-hidden">
           <ReactFlow
             nodes={nodes}
             edges={edges}

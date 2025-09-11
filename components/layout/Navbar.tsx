@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react'
 import { Sun, Moon } from 'lucide-react'
-import { ExamplesDropdown } from '../ui/ExamplesDropdown'
-import { InfoPanel } from '../ui/InfoPanel'
-import { ModeToggle } from '../ui/ModeToggle'
-import { ExportDropdown } from '../ui/ExportDropdown'
+import { ExamplesDropdown } from '../ui/examples-dropdown'
+import { InfoPanel } from '../ui/info-panel'
+import { ModeToggle } from '../ui/mode-toggle'
+import { ExportDropdown } from '../ui/export-dropdown'
 
 interface NavbarProps {
   isDarkMode: boolean;

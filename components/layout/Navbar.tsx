@@ -51,23 +51,38 @@ export function Navbar({
   }
 
   return (
-    <nav className="flex items-center justify-between px-3 py-2 bg-card/95 backdrop-blur-sm border-b border-border relative z-10">
-      <div className="flex items-center gap-3">
-        <h1 className="text-base font-semibold text-foreground font-mono tracking-tight">
-          DAG Sketch
-        </h1>
-        <div className="hidden sm:flex items-center">
+    <nav className="flex items-center justify-between px-4 py-3 bg-card/98 backdrop-blur-md border-b border-border/50 relative z-10 shadow-elegant">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-sm">
+            <svg className="w-4 h-4 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="4" cy="4" r="2" />
+              <circle cx="12" cy="12" r="2" />
+              <circle cx="20" cy="4" r="2" />
+              <circle cx="20" cy="20" r="2" />
+              <line x1="4" y1="4" x2="12" y2="12" />
+              <line x1="12" y1="12" x2="20" y2="4" />
+              <line x1="12" y1="12" x2="20" y2="20" />
+            </svg>
+          </div>
+          <h1 className="text-lg font-semibold text-foreground font-mono tracking-tight bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+            DAG Sketch
+          </h1>
+        </div>
+        <div className="hidden sm:flex items-center ml-2">
           <button
             onClick={onToggleDarkMode}
-            className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+            className="p-2 rounded-lg hover:bg-accent/50 transition-all duration-200 text-muted-foreground hover:text-foreground focus-ring group"
             aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
           >
-            {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
+            <div className="transition-transform duration-200 group-hover:scale-110">
+              {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+            </div>
           </button>
         </div>
       </div>
       
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
         <ExamplesDropdown
           isOpen={isExamplesOpen}
           setIsOpen={handleExamplesToggle}
@@ -91,13 +106,15 @@ export function Navbar({
           mode={mode}
         />
         
-        <div className="sm:hidden">
+        <div className="sm:hidden ml-1">
           <button
             onClick={onToggleDarkMode}
-            className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+            className="p-2 rounded-lg hover:bg-accent/50 transition-all duration-200 text-muted-foreground hover:text-foreground focus-ring group"
             aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
           >
-            {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
+            <div className="transition-transform duration-200 group-hover:scale-110">
+              {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+            </div>
           </button>
         </div>
       </div>

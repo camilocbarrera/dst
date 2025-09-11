@@ -69,14 +69,14 @@ const Tooltip: React.FC<TooltipProps> = ({ content, targets, position }) => {
           ref={el => {
             if (el) highlightRefs.current[index] = el;
           }}
-          className="fixed z-20 border-4 border-blue-500 rounded-lg"
+          className="fixed z-20 border-4 border-primary rounded-lg"
           style={{
             boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
             transition: 'all 0.3s ease-in-out',
           }}
         />
       ))}
-      <div ref={tooltipRef} className="fixed z-30 p-4 bg-white text-black rounded shadow-lg max-w-xs">
+      <div ref={tooltipRef} className="fixed z-30 p-4 bg-card text-card-foreground rounded shadow-lg max-w-xs border border-border">
         {content}
       </div>
     </>
@@ -153,13 +153,13 @@ export function Onboarding() {
             <div className="flex justify-between">
               <button
                 onClick={handleSkip}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                className="px-4 py-2 rounded bg-secondary text-secondary-foreground hover:bg-accent border border-border"
               >
                 Skip
               </button>
               <button
                 onClick={handleNext}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                className="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-foreground hover:text-background"
               >
                 {currentStep < onboardingSteps.length - 1 ? 'Next' : 'Finish'}
               </button>

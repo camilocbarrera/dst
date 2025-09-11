@@ -170,7 +170,7 @@ export function setupMonacoLanguages(monaco: Monaco, getNodes: () => Node[]) {
         'editorGutter.background': light.bg,
       },
     });
-  } catch (e) {
+  } catch {
     // no-op if theme cannot be computed in non-DOM contexts
   }
 }

@@ -39,25 +39,27 @@ export function EditorPanel({
   return (
     <div className="flex flex-col h-full gap-2 p-2">
       <div className="flex-grow border border-border/60 rounded-lg overflow-hidden bg-card shadow-elegant">
-        <Editor
-          height="100%"
-          language={mode === 'dagml' ? "yaml" : "bitshift"}
-          theme={isDarkMode ? "dst-dark" : "dst-light"}
-          value={input}
-          options={{
-            ...EDITOR_OPTIONS,
-            automaticLayout: true,
-            tabSize: 2,
-            fontSize: isMobile ? 11 : 12,
-            lineHeight: 1.3,
-            padding: { top: 8, bottom: 8 },
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-          }}
-          onChange={onInputChange}
-          beforeMount={handleEditorWillMount}
-          onMount={handleEditorDidMount}
-        />
+        <div id="editor" className="h-full">
+          <Editor
+            height="100%"
+            language={mode === 'dagml' ? "yaml" : "bitshift"}
+            theme={isDarkMode ? "dst-dark" : "dst-light"}
+            value={input}
+            options={{
+              ...EDITOR_OPTIONS,
+              automaticLayout: true,
+              tabSize: 2,
+              fontSize: isMobile ? 11 : 12,
+              lineHeight: 1.3,
+              padding: { top: 8, bottom: 8 },
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+            }}
+            onChange={onInputChange}
+            beforeMount={handleEditorWillMount}
+            onMount={handleEditorDidMount}
+          />
+        </div>
       </div>
       
       <div 

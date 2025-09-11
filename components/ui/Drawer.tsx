@@ -17,22 +17,24 @@ interface DrawerProps {
 
 interface DrawerTitleProps {
   children: React.ReactNode;
+  className?: string;
 }
 
 interface DrawerSubtitleProps {
   children: React.ReactNode;
+  className?: string;
 }
 
 interface DrawerContentProps {
   children: React.ReactNode;
 }
 
-const DrawerTitle: React.FC<DrawerTitleProps> = ({ children }) => (
-  <h2 className="text-sm font-semibold mb-2 text-foreground">{children}</h2>
+const DrawerTitle: React.FC<DrawerTitleProps> = ({ children, className }) => (
+  <h2 className={cn("text-sm font-semibold mb-2 text-foreground", className)}>{children}</h2>
 );
 
-const DrawerSubtitle: React.FC<DrawerSubtitleProps> = ({ children }) => (
-  <p className="text-xs text-muted-foreground mb-4">{children}</p>
+const DrawerSubtitle: React.FC<DrawerSubtitleProps> = ({ children, className }) => (
+  <p className={cn("text-xs text-muted-foreground mb-4", className)}>{children}</p>
 );
 
 const DrawerContent: React.FC<DrawerContentProps> = ({ children }) => (

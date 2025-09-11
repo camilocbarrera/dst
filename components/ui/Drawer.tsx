@@ -4,12 +4,15 @@ import React, { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { useClickOutside } from '../../hooks/useClickOutside'
+import { cn } from '@/lib/utils'
 
 interface DrawerProps {
   visible: boolean;
   onClose: () => void;
   placement?: 'top' | 'right' | 'bottom' | 'left';
   children: React.ReactNode;
+  overlayClassName?: string;
+  overlayStyle?: React.CSSProperties;
 }
 
 interface DrawerTitleProps {
@@ -64,7 +67,7 @@ export const Drawer: React.FC<DrawerProps> & {
   Title: React.FC<DrawerTitleProps>;
   Subtitle: React.FC<DrawerSubtitleProps>;
   Content: React.FC<DrawerContentProps>;
-} = ({ visible, onClose, placement = 'right', children }) => {
+} = ({ visible, onClose, placement = 'right', children, overlayClassName, overlayStyle }) => {
   const drawerRef = useClickOutside<HTMLDivElement>(() => {
     if (visible) onClose();
   });
@@ -99,9 +102,9 @@ export const Drawer: React.FC<DrawerProps> & {
     <>
       {/* Overlay */}
       <div 
-        className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9998] transition-all duration-300"
+        className={cn("fixed inset-0 bg-foreground/60 backdrop-blur-md z-[9998] transition-all duration-300", overlayClassName)}
         onClick={onClose}
-        style={{ backdropFilter: 'blur(8px)' }}
+        style={overlayStyle}
       />
       
       {/* Drawer */}

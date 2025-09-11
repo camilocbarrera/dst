@@ -37,6 +37,7 @@ export function ExportDropdown({ isOpen, setIsOpen, onExport, mode }: ExportDrop
               className="flex items-center w-full px-3 py-2 text-xs text-popover-foreground hover:bg-primary/10 hover:text-primary transition-colors"
               role="menuitem"
             >
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
               <Image size={12} className="mr-2" />
               DAG Lineage (PNG)
             </button>

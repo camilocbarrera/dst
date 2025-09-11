@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
-import { useClickOutside } from '../../hooks/useClickOutside'
+import { useClickOutside } from '../../hooks/use-click-outside'
 import { cn } from '@/lib/utils'
 
 interface DrawerProps {

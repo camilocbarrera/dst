@@ -19,9 +19,7 @@ export function ModeToggle({ mode, onToggleMode }: ModeToggleProps) {
         aria-label={`Switch to ${mode === 'dagml' ? 'Bitshift' : 'DAGML'} mode`}
       >
         <span
-          className={`inline-block h-2.5 w-2.5 transform rounded-full bg-primary transition-transform duration-200 ${
-            mode === 'bitshift' ? 'translate-x-4.5' : 'translate-x-0.5'
-          }`}
+          className={`inline-block h-2.5 w-2.5 transform rounded-full bg-primary transition-transform duration-200 ${mode === 'bitshift' ? 'translate-x-[18px]' : 'translate-x-0.5'}`}
         />
       </button>
       <span className={`transition-colors font-medium ${mode === 'bitshift' ? 'text-primary' : 'text-muted-foreground'}`}>

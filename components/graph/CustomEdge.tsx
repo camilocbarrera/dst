@@ -29,16 +29,9 @@ export function CustomEdge({
       style={{
         ...style,
         strokeWidth: 2,
-        stroke: 'rgba(255, 255, 255, 0.6) !important',
         strokeDasharray: '0',
       }}
-      className="transition-all duration-200"
-      onMouseEnter={(e) => {
-        e.currentTarget.style.setProperty('stroke', 'rgba(255, 255, 255, 0.9)', 'important');
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.setProperty('stroke', 'rgba(255, 255, 255, 0.6)', 'important');
-      }}
+      className="react-flow__edge-path transition-all duration-200"
       d={edgePath}
       markerEnd={markerEnd}
     />

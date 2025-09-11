@@ -37,12 +37,12 @@ export function EditorPanel({
   };
 
   return (
-    <div className="flex flex-col h-full gap-1.5 p-1.5">
-      <div className="flex-grow border border-border rounded-md overflow-hidden bg-card">
+    <div className="flex flex-col h-full gap-2 p-2">
+      <div className="flex-grow border border-border/60 rounded-lg overflow-hidden bg-card shadow-elegant">
         <Editor
           height="100%"
           language={mode === 'dagml' ? "yaml" : "bitshift"}
-          theme={isDarkMode ? "vs-dark" : "light"}
+          theme={isDarkMode ? "dst-dark" : "dst-light"}
           value={input}
           options={{
             ...EDITOR_OPTIONS,
@@ -50,7 +50,7 @@ export function EditorPanel({
             tabSize: 2,
             fontSize: isMobile ? 11 : 12,
             lineHeight: 1.3,
-            padding: { top: 6, bottom: 6 },
+            padding: { top: 8, bottom: 8 },
             minimap: { enabled: false },
             scrollBeyondLastLine: false,
           }}
@@ -60,15 +60,23 @@ export function EditorPanel({
         />
       </div>
       
-      <div className="h-28 md:h-32 border border-border rounded-md overflow-hidden bg-card flex flex-col">
-        <div className="px-2.5 py-1.5 bg-muted/30 border-b border-border">
-          <span className="text-xs font-medium text-muted-foreground font-mono">
+      <div 
+        id="repl-output"
+        className="h-28 md:h-32 border border-border/60 rounded-lg overflow-hidden bg-card shadow-elegant flex flex-col"
+      >
+        <div className="px-3 py-2 bg-gradient-to-r from-muted/40 via-muted/20 to-transparent border-b border-border/40">
+          <span className="text-xs font-medium text-muted-foreground font-mono flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-primary/60 animate-pulse"></div>
             Output
           </span>
         </div>
         <div className="flex-1 overflow-auto">
-          <pre className="p-2.5 text-xs font-mono leading-tight text-foreground whitespace-pre-wrap">
-            {replOutput || 'No output yet...'}
+          <pre className="p-3 text-xs font-mono leading-relaxed text-foreground/90 whitespace-pre-wrap">
+            {replOutput || (
+              <span className="text-muted-foreground/70 italic">
+                No output yet... Start by editing your DAG definition above.
+              </span>
+            )}
           </pre>
         </div>
       </div>

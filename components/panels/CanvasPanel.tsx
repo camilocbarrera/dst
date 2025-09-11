@@ -51,16 +51,16 @@ export function CanvasPanel({
 }: CanvasPanelProps) {
   return (
     <div className="flex flex-col h-full">
-      <div className="flex border-b border-border bg-card/50">
+      <div className="flex border-b border-border/50 bg-card/80 backdrop-blur-sm px-1 py-1">
         <button
-          className={`py-1.5 px-2.5 flex items-center text-xs font-medium transition-colors ${
+          className={`py-2 px-4 flex items-center text-xs font-medium rounded-md transition-all duration-200 relative overflow-hidden group ${
             rightSideTab === 'graph' 
-              ? 'bg-primary/10 text-primary border-b-2 border-primary' 
-              : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+              ? 'bg-primary/15 text-primary shadow-sm border border-primary/20 before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/5 before:to-transparent' 
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent/60 hover:shadow-sm'
           }`}
           onClick={() => setRightSideTab('graph')}
         >
-          <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5 mr-2 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <circle cx="4" cy="4" r="2" />
             <circle cx="12" cy="12" r="2" />
             <circle cx="20" cy="4" r="2" />
@@ -73,14 +73,14 @@ export function CanvasPanel({
         </button>
         {mode === 'dagml' && (
           <button
-            className={`py-1.5 px-2.5 flex items-center text-xs font-medium transition-colors ${
+            className={`py-2 px-4 flex items-center text-xs font-medium rounded-md transition-all duration-200 relative overflow-hidden group ml-1 ${
               rightSideTab === 'python' 
-                ? 'bg-primary/10 text-primary border-b-2 border-primary' 
-                : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                ? 'bg-primary/15 text-primary shadow-sm border border-primary/20 before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/5 before:to-transparent' 
+                : 'text-muted-foreground hover:text-foreground hover:bg-accent/60 hover:shadow-sm'
             }`}
             onClick={() => setRightSideTab('python')}
           >
-            <FileCode size={12} className="mr-1.5" />
+            <FileCode size={14} className="mr-2 transition-transform duration-200 group-hover:scale-110" />
             Code
           </button>
         )}
@@ -112,7 +112,7 @@ export function CanvasPanel({
           <Editor
             height="100%"
             language="python"
-            theme={isDarkMode ? "vs-dark" : "light"}
+            theme={isDarkMode ? "dst-dark" : "dst-light"}
             value={generatedPythonCode}
             options={{
               ...EDITOR_OPTIONS,

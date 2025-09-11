@@ -96,19 +96,19 @@ const onboardingSteps: OnboardingStep[] = [
     position: 'right',
   },
   {
-    targets: ['#graph', '.react-flow'],
-    content: 'As you define your DAG, the graph visualization will automatically update. Tasks and their relationships will be displayed here in real-time.',
+    targets: ['#repl-output'],
+    content: 'As you type, the REPL output below shows real-time validation and helpful information about your DAG definition. Watch for errors or warnings here.',
+    position: 'top',
+  },
+  {
+    targets: ['#graph'],
+    content: 'Once your DAG is valid, the graph visualization will automatically update. Tasks and their relationships will be displayed here in real-time.',
     position: 'left',
   },
   {
     targets: ['#code-tab'],
     content: 'Switch to this tab to see the automatically generated Python code for your DAG. This code is ready to use in Apache Airflow.',
     position: 'bottom',
-  },
-  {
-    targets: ['#repl-output'],
-    content: 'The REPL output provides helpful information for tracing and checking errors in your DAG definition.',
-    position: 'top',
   },
 ];
 

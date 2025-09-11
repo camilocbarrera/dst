@@ -1,7 +1,7 @@
 import yaml from 'js-yaml'
 import { Node, Edge } from 'reactflow'
 import { ParsedYAML } from '../types/dag'
-import { generatePythonDAG } from './generatePython'
+import { generatePythonDAG } from './generate-python'
 
 export function parseYAMLInput(
   input: string,

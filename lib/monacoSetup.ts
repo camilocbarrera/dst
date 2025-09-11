@@ -116,4 +116,61 @@ export function setupMonacoLanguages(monaco: Monaco, getNodes: () => Node[]) {
       };
     }
   });
+
+  // Define Monaco themes to match app background/foreground
+  try {
+    const root = document.documentElement;
+    const originalClasses = Array.from(root.classList);
+
+    const resolveHex = (hslVar: string): string => {
+      const temp = document.createElement('div');
+      temp.style.color = `hsl(${hslVar})`;
+      document.body.appendChild(temp);
+      const rgb = getComputedStyle(temp).color;
+      document.body.removeChild(temp);
+      const match = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+      if (!match) return '#000000';
+      const r = Number(match[1]).toString(16).padStart(2, '0');
+      const g = Number(match[2]).toString(16).padStart(2, '0');
+      const b = Number(match[3]).toString(16).padStart(2, '0');
+      return `#${r}${g}${b}`;
+    };
+
+    const getThemeColors = (mode: 'dark' | 'light') => {
+      root.classList.remove('light', 'dark');
+      root.classList.add(mode);
+      const hslBg = getComputedStyle(root).getPropertyValue('--background').trim();
+      const hslFg = getComputedStyle(root).getPropertyValue('--foreground').trim();
+      return { bg: resolveHex(hslBg), fg: resolveHex(hslFg) };
+    };
+
+    const dark = getThemeColors('dark');
+    const light = getThemeColors('light');
+
+    root.className = originalClasses.join(' ');
+
+    monaco.editor.defineTheme('dst-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [],
+      colors: {
+        'editor.background': dark.bg,
+        'editor.foreground': dark.fg,
+        'editorGutter.background': dark.bg,
+      },
+    });
+
+    monaco.editor.defineTheme('dst-light', {
+      base: 'vs',
+      inherit: true,
+      rules: [],
+      colors: {
+        'editor.background': light.bg,
+        'editor.foreground': light.fg,
+        'editorGutter.background': light.bg,
+      },
+    });
+  } catch (e) {
+    // no-op if theme cannot be computed in non-DOM contexts
+  }
 }

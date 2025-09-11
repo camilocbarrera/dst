@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react'
-import { Info } from 'lucide-react'
+import { Info, Heart } from 'lucide-react'
 import { Drawer } from './Drawer'
 
 interface InfoPanelProps {
@@ -14,15 +14,23 @@ export function InfoPanel({ isOpen, setIsOpen }: InfoPanelProps) {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="px-2.5 py-1.5 text-xs font-medium bg-secondary/80 hover:bg-accent text-secondary-foreground rounded-md transition-all duration-200 flex items-center gap-1.5 border border-border/50 hover:border-border"
+        className="px-3 py-2 text-xs font-medium bg-gradient-to-b from-secondary/90 to-secondary/70 hover:bg-accent text-secondary-foreground rounded-lg transition-all duration-200 flex items-center gap-2 border border-border/50 hover:border-border shadow-elegant hover:shadow-elevated focus-ring group"
       >
-        <Info size={12} />
+        <Info size={14} className="transition-transform duration-200 group-hover:scale-110" />
         Info
       </button>
       
-      <Drawer visible={isOpen} onClose={() => setIsOpen(false)} placement="right">
-        <Drawer.Title>DAG Sketch Tool</Drawer.Title>
-        <Drawer.Subtitle>
+      <Drawer 
+        visible={isOpen} 
+        onClose={() => setIsOpen(false)} 
+        placement="right"
+        overlayClassName="bg-foreground/30 backdrop-blur-sm"
+        overlayStyle={{ backdropFilter: 'blur(4px)' }}
+      >
+        <Drawer.Title className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+          DAG Sketch Tool
+        </Drawer.Title>
+        <Drawer.Subtitle className="text-muted-foreground/90">
           Visualizing and designing Directed Acyclic Graphs (DAGs) from YAML-based DAGML definitions.
         </Drawer.Subtitle>
         
@@ -81,6 +89,12 @@ export function InfoPanel({ isOpen, setIsOpen }: InfoPanelProps) {
                   Learn more about bitshift operators in Airflow
                 </a>
               </div>
+            </section>
+
+            <section className="pt-2 border-t border-border">
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                Made with <Heart className="h-4 w-4 text-red-500 fill-red-500 animate-pulse" /> in LatAm
+              </p>
             </section>
           </div>
         </Drawer.Content>
